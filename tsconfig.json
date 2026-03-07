@@ -1,3 +1,6 @@
 {
-  "extends": "@my-better-t-app/config/tsconfig.base.json"
+  "extends": "@torinojs-swarm/config/tsconfig.base.json",
+  "exclude": [
+    "opensrc"
+  ]
 }

@@ -48,3 +48,6 @@ coverage
 .cache
 tmp
 temp
+
+# opensrc - source code for packages
+opensrc/
