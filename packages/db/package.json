@@ -1,5 +1,5 @@
 {
-  "name": "@my-better-t-app/db",
+  "name": "@torinojs-swarm/db",
   "type": "module",
   "exports": {
     ".": {
@@ -10,20 +10,28 @@
     }
   },
   "scripts": {
+    "check-types": "tsc -b",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@my-better-t-app/env": "workspace:*",
+    "@effect/sql": "0.49.0",
+    "@effect/sql-drizzle": "0.48.1",
+    "@effect/sql-pg": "0.50.3",
     "@neondatabase/serverless": "^1.0.2",
     "dotenv": "catalog:",
+    "@torinojs-swarm/env": "workspace:*",
     "drizzle-orm": "^0.45.1",
+    "effect": "catalog:",
+    "pg": "^8.16.3",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@my-better-t-app/config": "workspace:*",
+    "@torinojs-swarm/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "@types/pg": "^8.15.6",
     "drizzle-kit": "^0.31.8",
     "typescript": "catalog:"
   }
