@@ -172,9 +172,9 @@ T0 ─────────────────────────�
 - **location**: root docs, README, contributor/bootstrap docs, notes
 - **description**: Write the bootstrap documentation around the final monorepo shape: what belongs in apps vs packages, how to add a backend domain, how to add a frontend domain, how Eden/Effect/Query/DB/AI connect, how Turbo tasks are expected to work, and how Vercel project mapping works. Record any non-obvious gotchas in shared notes.
 - **validation**: Another engineer can extend the repo without re-deciding package boundaries or Turbo task structure.
-- **status**: Planned
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Replaced the scaffold README with repo-specific architecture/bootstrap documentation; documented package boundaries, `modules` vs `features`, Effect/Elysia/Eden/Query/DB/AI roles, local dev flow, and the two-project Vercel deployment model; moved institutional memory into repo-local progressive-disclosure notes under `.agents/notes`.
+- **files edited/created**: `README.md`, `demo/.agents/notes/index.md`, `demo/.agents/notes/repo-structure.md`, `demo/.agents/notes/frontend-transport.md`, `demo/.agents/notes/turbo-tooling.md`, `demo/.agents/notes/effect-db.md`, `demo/.agents/notes/deployment-boundaries.md`, `demo/.agents/notes/bootstrap-handoff.md`
 - **backlog_item_id**: TOR-10
 - **backlog_item_url**: https://linear.app/stefan-projects/issue/TOR-10/t8-document-package-boundaries-dev-flows-and-keynote-safe-conventions
 - **relation_mode**: native
