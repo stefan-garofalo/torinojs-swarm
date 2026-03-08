@@ -8,7 +8,7 @@
     "build": "next build",
     "deploy": "vercel",
     "deploy:prod": "vercel --prod",
-    "lint": "next lint",
+    "lint": "oxlint",
     "start": "next start"
   },
   "dependencies": {
@@ -42,6 +42,7 @@
     "@types/node": "^20",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "elysia": "catalog:",
     "tailwindcss": "^4.1.10",
     "typescript": "catalog:"
   }
