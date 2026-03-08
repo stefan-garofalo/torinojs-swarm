@@ -4,8 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./server": "./src/server.ts",
-    "./web": "./src/web.ts"
+    "./server": {
+      "types": "./src/server.ts",
+      "default": "./dist/src/server.js"
+    },
+    "./web": {
+      "types": "./src/web.ts",
+      "default": "./dist/src/web.js"
+    }
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.1",
@@ -14,6 +20,7 @@
     "zod": "catalog:"
   },
   "scripts": {
+    "build": "tsc -b",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {

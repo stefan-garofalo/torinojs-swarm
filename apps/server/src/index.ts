@@ -1,8 +1,8 @@
 import { Config, Effect } from "effect";
 
-import { app } from "./app";
-import { AppRuntime } from "./runtime";
-import { aiModelSelection } from "./ai";
+import { app } from "./app.js";
+import { AppRuntime } from "./runtime.js";
+import { aiModelSelection } from "./ai.js";
 
 const launch = Effect.gen(function* () {
   void aiModelSelection;

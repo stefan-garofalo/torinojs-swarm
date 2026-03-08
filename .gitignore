@@ -53,3 +53,4 @@ temp
 opensrc/
 
 .claude/settings.local.json
+.vercel
