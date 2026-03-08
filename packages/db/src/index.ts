@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { PgClient } from "@effect/sql-pg";
 import * as PgDrizzle from "@effect/sql-drizzle/Pg";
-import { env } from "@torinojs-swarm/env/server";
+import { env } from "@reaping/env/server";
 
 import * as schema from "./schema/auth.js";
 

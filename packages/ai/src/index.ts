@@ -1,5 +1,5 @@
 import { type GatewayModelId } from "ai";
-import { env } from "@torinojs-swarm/env/server";
+import { env } from "@reaping/env/server";
 
 export type AiProvider = "gateway" | "openai";
 

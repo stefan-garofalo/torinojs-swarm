@@ -1,4 +1,4 @@
-import { env } from "@torinojs-swarm/env/web";
+import { env } from "@reaping/env/web";
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({

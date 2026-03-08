@@ -20,10 +20,10 @@ Then bind each project from its folder:
 
 ```bash
 cd apps/web
-vercel link --yes --project torinojs-swarm-web
+vercel link --yes --project reaping-web
 
 cd ../server
-vercel link --yes --project torinojs-swarm-server
+vercel link --yes --project reaping-server
 ```
 
 ## Build and deploy commands

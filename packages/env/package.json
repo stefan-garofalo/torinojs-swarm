@@ -1,5 +1,5 @@
 {
-  "name": "@torinojs-swarm/env",
+  "name": "@reaping/env",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -24,7 +24,7 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@torinojs-swarm/config": "workspace:*",
+    "@reaping/config": "workspace:*",
     "@types/bun": "catalog:",
     "typescript": "catalog:"
   }

@@ -1,4 +1,4 @@
-import { env } from "@torinojs-swarm/env/server";
+import { env } from "@reaping/env/server";
 import { Elysia } from "elysia";
 import { authPlugin } from "./modules/http/auth-plugin.js";
 import { httpTransportPlugin } from "./modules/http/transport-plugin.js";
@@ -9,7 +9,7 @@ export const createApp = (corsOrigin: string) =>
     .use(httpTransportPlugin(corsOrigin))
     .use(demoDomain)
     .use(authPlugin)
-    .get("/", () => "OK")
+    .get("/health", () => "OK")
 
 export const app = createApp(env.CORS_ORIGIN)
 

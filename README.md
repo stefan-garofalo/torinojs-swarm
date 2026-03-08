@@ -1,4 +1,4 @@
-# torinojs-swarm
+# reaping
 
 Keynote demo monorepo. Better-T-Stack scaffold, then rebuilt around:
 
@@ -139,12 +139,12 @@ Core files:
 
 ### Contract flow
 
-- On the server, `apps/web` can consume the public package export `server/app` and call the Elysia app directly through a custom fetcher.
+- `apps/web` can consume the public package export `@reaping/server/app` as a type-only contract surface.
 - In the browser, Eden calls `NEXT_PUBLIC_SERVER_URL`.
 
 Important boundary:
 
-- `apps/web` must only consume `server/app`
+- `apps/web` must only consume `@reaping/server/app`
 - never import `server/src/*`
 - never point frontend TS paths into server internals
 
@@ -313,6 +313,6 @@ Read the index first, then only the notes relevant to the task.
 
 If you need the full foundation context:
 
-- `.agents/torinojs-swarm-bootstrap-plan.md`
+- `.agents/plan/TOR-1/bootstrap-torinojs-swarm-monorepo-foundation/pr-review-fixes-plan.md`
 - `.agents/source-context-baseline.md`
 - GitHub PR `#1`

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { env } from "@torinojs-swarm/env/web";
+import { env } from "@reaping/env/web";
 
 import { Geist, Geist_Mono } from "next/font/google";
 
@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
-  title: "torinojs-swarm",
-  description: "torinojs-swarm",
+  title: "reaping",
+  description: "reaping",
 };
 
 export default function RootLayout({

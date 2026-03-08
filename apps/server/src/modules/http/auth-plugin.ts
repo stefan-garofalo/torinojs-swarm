@@ -1,5 +1,5 @@
 import { Elysia, type Context } from "elysia"
-import { auth } from "@torinojs-swarm/auth"
+import { auth } from "@reaping/auth"
 import { mapHttpMethodError } from "./transport-plugin.js"
 
 export const authPlugin = new Elysia({ name: "auth" }).all(
