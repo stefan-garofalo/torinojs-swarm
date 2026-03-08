@@ -51,3 +51,5 @@ temp
 
 # opensrc - source code for packages
 opensrc/
+
+.claude/settings.local.json
