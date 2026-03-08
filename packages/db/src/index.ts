@@ -1,3 +1,4 @@
+import { SqlClient } from "@effect/sql";
 import { Effect, Layer, Redacted } from "effect";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
@@ -21,22 +22,16 @@ const drizzleSchema = schema as unknown as Record<string, never>;
 
 export const DatabaseDrizzleLayer = PgDrizzle.layerWithConfig({
   schema: drizzleSchema,
-});
+}).pipe(Layer.provideMerge(DatabaseClientLayer));
 
-export const DatabaseLayer = Layer.mergeAll(
-  DatabaseClientLayer,
-  DatabaseDrizzleLayer,
-);
+export const DatabaseLayer = DatabaseDrizzleLayer;
 
-export const withDatabase = <A, E>(
-  program: Effect.Effect<A, E, unknown>
-): Effect.Effect<A, E, never> =>
-  program.pipe(Effect.provide(DatabaseLayer)) as Effect.Effect<A, E, never>;
+type DatabaseRequirement = PgDrizzle.PgDrizzle | SqlClient.SqlClient;
 
-export const runDatabase = <A, E>(
-  program: Effect.Effect<A, E, unknown>
-): Promise<A> =>
-  Effect.runPromise(withDatabase(program));
+export const withDatabase = <A, E, R>(
+  program: Effect.Effect<A, E, R | DatabaseRequirement>
+): Effect.Effect<A, E, Exclude<R, DatabaseRequirement>> =>
+  program.pipe(Effect.provide(Layer.orDie(DatabaseLayer)));
 
 export const pingDatabaseEffect = Effect.gen(function* () {
   const queryDb = yield* PgDrizzle.PgDrizzle;

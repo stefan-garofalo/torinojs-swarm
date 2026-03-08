@@ -1,7 +1,4 @@
-import path from "node:path";
 import { defineConfig } from "rolldown";
-
-const workspacePackagePrefix = "@torinojs-swarm/";
 
 export default defineConfig({
   input: "./src/index.ts",
@@ -12,11 +9,7 @@ export default defineConfig({
       return true;
     }
 
-    if (id.startsWith(".") || path.isAbsolute(id)) {
-      return false;
-    }
-
-    return !id.startsWith(workspacePackagePrefix);
+    return false;
   },
   output: {
     dir: "./dist",

@@ -4,3 +4,4 @@
 [effect-db.md](./effect-db.md) Effect SQL + Drizzle integration quirks in this repo.
 [deployment-boundaries.md](./deployment-boundaries.md) Vercel monorepo deploy rules and package-boundary constraints.
 [bootstrap-handoff.md](./bootstrap-handoff.md) Where to resume the bootstrap initiative without re-deriving context.
+[linear-cli.md](./linear-cli.md) Linear CLI story creation patterns, team/project/label gotchas, dependency structure for TOR-31 to TOR-50.

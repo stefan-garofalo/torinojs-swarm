@@ -17,6 +17,21 @@
         "AI_OPENAI_MODEL",
         "NODE_ENV"
       ]
+    },
+    "test": {
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_URL_DIRECT",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "CORS_ORIGIN",
+        "AI_PROVIDER",
+        "AI_GATEWAY_MODEL",
+        "AI_OPENAI_API_KEY",
+        "AI_OPENAI_BASE_URL",
+        "AI_OPENAI_MODEL",
+        "NODE_ENV"
+      ]
     }
   }
 }

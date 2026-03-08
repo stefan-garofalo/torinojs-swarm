@@ -18,7 +18,8 @@
     "lint": "oxlint",
     "compile": "bun build --compile --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "dev": "bun run --hot src/index.ts",
-    "start": "bun run dist/index.mjs"
+    "start": "bun run dist/index.mjs",
+    "test": "bun test ./src/app.smoke.test.ts"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.1",
@@ -33,6 +34,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@elysiajs/eden": "^1.4.8",
     "@torinojs-swarm/config": "workspace:*",
     "@types/bun": "catalog:",
     "rolldown": "^1.0.0-rc.7",
