@@ -5,7 +5,22 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_URL_DIRECT",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "CORS_ORIGIN",
+        "AI_PROVIDER",
+        "AI_GATEWAY_MODEL",
+        "AI_OPENAI_API_KEY",
+        "AI_OPENAI_BASE_URL",
+        "AI_OPENAI_MODEL",
+        "NODE_ENV",
+        "NEXT_PUBLIC_SERVER_URL",
+        "NEXT_PUBLIC_APP_URL"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
