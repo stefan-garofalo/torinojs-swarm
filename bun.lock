@@ -33,6 +33,7 @@
         "zod": "catalog:",
       },
       "devDependencies": {
+        "@elysiajs/eden": "^1.4.8",
         "@torinojs-swarm/config": "workspace:*",
         "@types/bun": "catalog:",
         "rolldown": "^1.0.0-rc.7",

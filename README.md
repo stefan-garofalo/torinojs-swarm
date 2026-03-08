@@ -116,7 +116,6 @@ Exports worth knowing:
 - `db`
 - `DatabaseLayer`
 - `withDatabase(...)`
-- `runDatabase(...)`
 - `pingDatabaseEffect`
 
 Current runtime strategy:
@@ -317,4 +316,3 @@ If you need the full foundation context:
 - `.agents/torinojs-swarm-bootstrap-plan.md`
 - `.agents/source-context-baseline.md`
 - GitHub PR `#1`
-
