@@ -1,5 +1,5 @@
 {
-  "name": "@torinojs-swarm/auth",
+  "name": "@reaping/auth",
   "type": "module",
   "exports": {
     ".": {
@@ -12,14 +12,14 @@
     "check-types": "tsc -b"
   },
   "dependencies": {
-    "@torinojs-swarm/db": "workspace:*",
-    "@torinojs-swarm/env": "workspace:*",
+    "@reaping/db": "workspace:*",
+    "@reaping/env": "workspace:*",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@torinojs-swarm/config": "workspace:*",
+    "@reaping/config": "workspace:*",
     "typescript": "catalog:"
   }
 }

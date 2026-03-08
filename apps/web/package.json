@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "@reaping/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -14,8 +14,8 @@
   "dependencies": {
     "@elysiajs/eden": "^1.4.8",
     "@base-ui/react": "^1.0.0",
-    "@torinojs-swarm/auth": "workspace:*",
-    "@torinojs-swarm/env": "workspace:*",
+    "@reaping/auth": "workspace:*",
+    "@reaping/env": "workspace:*",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.2",
     "@tanstack/react-form": "^1.28.0",
@@ -30,14 +30,14 @@
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "shadcn": "^3.6.2",
-    "server": "workspace:*",
+    "@reaping/server": "workspace:*",
     "sonner": "^2.0.5",
     "tailwind-merge": "^3.3.1",
     "tw-animate-css": "^1.3.4",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@torinojs-swarm/config": "workspace:*",
+    "@reaping/config": "workspace:*",
     "@tailwindcss/postcss": "^4.1.10",
     "@types/node": "^20",
     "@types/react": "^19.2.7",

@@ -1,5 +1,5 @@
 {
-  "name": "@torinojs-swarm/ai",
+  "name": "@reaping/ai",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -15,11 +15,11 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "3.0.41",
-    "@torinojs-swarm/env": "workspace:*",
+    "@reaping/env": "workspace:*",
     "ai": "6.0.116"
   },
   "devDependencies": {
-    "@torinojs-swarm/config": "workspace:*",
+    "@reaping/config": "workspace:*",
     "typescript": "catalog:"
   }
 }

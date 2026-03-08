@@ -1,5 +1,5 @@
 {
-  "name": "@torinojs-swarm/db",
+  "name": "@reaping/db",
   "type": "module",
   "exports": {
     ".": {
@@ -29,14 +29,14 @@
     "@effect/sql-pg": "0.50.3",
     "@neondatabase/serverless": "^1.0.2",
     "dotenv": "catalog:",
-    "@torinojs-swarm/env": "workspace:*",
+    "@reaping/env": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "effect": "catalog:",
     "pg": "^8.16.3",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@torinojs-swarm/config": "workspace:*",
+    "@reaping/config": "workspace:*",
     "@types/bun": "catalog:",
     "@types/pg": "^8.15.6",
     "drizzle-kit": "^0.31.8",

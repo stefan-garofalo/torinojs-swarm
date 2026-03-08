@@ -1,4 +1,4 @@
-import "@torinojs-swarm/env/web";
+import "@reaping/env/web";
 import type { NextConfig } from "next";
 import { fileURLToPath } from "node:url";
 

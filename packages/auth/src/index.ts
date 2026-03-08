@@ -1,6 +1,6 @@
-import { db } from "@torinojs-swarm/db";
-import * as schema from "@torinojs-swarm/db/schema/auth";
-import { env } from "@torinojs-swarm/env/server";
+import { db } from "@reaping/db";
+import * as schema from "@reaping/db/schema/auth";
+import { env } from "@reaping/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
