@@ -47,7 +47,7 @@ The system is self-perpetuating:
 - 8-bit/16-bit retro graphics using [8bitcn](https://www.8bitcn.com/) as foundation
 - Dark color palette: blacks, grays, deep reds
 - CRT scan lines and terminal effects
-- Dungeon/underground aesthetic (can be tweaked from 8bitcn defaults)
+- Dark terminal-like, retro-dark aesthetic with criminal vibes
 
 **UI Framework:**
 - Based on shadcn pixel art variant (8bitcn)

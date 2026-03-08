@@ -5,7 +5,8 @@
       "Bash(mkdir:*)",
       "Bash(cat:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nDocument The Reaping game requirements\n\nComprehensive requirements documentation for dystopian AI vs human Russian roulette game:\n- Core concept, theme, and aesthetic direction \\(pixel art, cynical AI\\)\n- Game structure: HP system, magazines, rounds, AI eject mechanic\n- Economy: bell curve wallets, betting system, freedom pass, leaderboard\n- Complete game flow: lobby, reaping, gameplay, death/victory states\n- Technical stack: Effect.ts, AI SDK, Neon, Redis, 8bitcn UI\n- Magic numbers for balance tuning \\(placeholders\\)\n- Future considerations: bet types, taunts, open questions\n\nAll requirements captured for Linear tracking and implementation.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nDocument The Reaping game requirements\n\nComprehensive requirements documentation for dystopian AI vs human Russian roulette game:\n- Core concept, theme, and aesthetic direction \\(pixel art, cynical AI\\)\n- Game structure: HP system, magazines, rounds, AI eject mechanic\n- Economy: bell curve wallets, betting system, freedom pass, leaderboard\n- Complete game flow: lobby, reaping, gameplay, death/victory states\n- Technical stack: Effect.ts, AI SDK, Neon, Redis, 8bitcn UI\n- Magic numbers for balance tuning \\(placeholders\\)\n- Future considerations: bet types, taunts, open questions\n\nAll requirements captured for Linear tracking and implementation.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)"
     ]
   }
 }
