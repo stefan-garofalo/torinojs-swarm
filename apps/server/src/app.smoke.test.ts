@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { treaty } from "@elysiajs/eden";
 
-import { app, type App } from "./app";
+import { app, type App } from "./app.js";
 
 describe("app smoke", () => {
   let server: Bun.Server<undefined>;

@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { pingDatabaseEffect, withDatabase } from "@torinojs-swarm/db"
-import { DemoDatabaseUnavailableError, DemoItemNotFoundError } from "./errors"
+import { DemoDatabaseUnavailableError, DemoItemNotFoundError } from "./errors.js"
 
 export interface DemoItem {
   id: string

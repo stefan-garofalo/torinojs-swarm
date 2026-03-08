@@ -7,6 +7,7 @@ const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
 const nextConfig: NextConfig = {
   typedRoutes: true,
   reactCompiler: true,
+  outputFileTracingRoot: repoRoot,
   turbopack: {
     root: repoRoot,
   },

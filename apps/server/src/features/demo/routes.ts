@@ -1,11 +1,11 @@
 import { Elysia, status, t } from "elysia"
 import { Effect } from "effect"
-import { AppRuntime } from "../../runtime"
+import { AppRuntime } from "../../runtime.js"
 import {
   DemoDatabaseUnavailableError,
   DemoItemNotFoundError,
-} from "./errors"
-import { DemoService } from "./service"
+} from "./errors.js"
+import { DemoService } from "./service.js"
 
 const demoItemSuccess = t.Object({
   id: t.String(),

@@ -1,1 +1,1 @@
-export { demoRoutes as demoDomain } from "./routes"
+export { demoRoutes as demoDomain } from "./routes.js"

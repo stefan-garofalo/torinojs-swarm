@@ -1,6 +1,6 @@
 import { Elysia, type Context } from "elysia"
 import { auth } from "@torinojs-swarm/auth"
-import { mapHttpMethodError } from "./transport-plugin"
+import { mapHttpMethodError } from "./transport-plugin.js"
 
 export const authPlugin = new Elysia({ name: "auth" }).all(
   "/api/auth/*",
