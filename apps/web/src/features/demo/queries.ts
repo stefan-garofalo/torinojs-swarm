@@ -7,7 +7,7 @@ export const demoItemId = "demo-1" as const;
 const getDemoApi = () => getDemoApiClient();
 
 export const fetchDemoItem = async () => {
-  const api = await getDemoApi();
+  const api = getDemoApi();
 
   return api.api.demo.items[demoItemId].get();
 };
@@ -20,7 +20,7 @@ export const demoItemQueryOptions = queryOptions({
 });
 
 export const fetchDemoDbStatus = async () => {
-  const api = await getDemoApi();
+  const api = getDemoApi();
 
   return api.api.demo.db.get();
 };

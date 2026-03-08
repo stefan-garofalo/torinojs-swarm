@@ -6,7 +6,11 @@
       "Bash(cat:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nDocument The Reaping game requirements\n\nComprehensive requirements documentation for dystopian AI vs human Russian roulette game:\n- Core concept, theme, and aesthetic direction \\(pixel art, cynical AI\\)\n- Game structure: HP system, magazines, rounds, AI eject mechanic\n- Economy: bell curve wallets, betting system, freedom pass, leaderboard\n- Complete game flow: lobby, reaping, gameplay, death/victory states\n- Technical stack: Effect.ts, AI SDK, Neon, Redis, 8bitcn UI\n- Magic numbers for balance tuning \\(placeholders\\)\n- Future considerations: bet types, taunts, open questions\n\nAll requirements captured for Linear tracking and implementation.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh api:*)",
+      "Bash(gh issue create --title \"Fix Effect Layer composition: DatabaseLayer dependencies not properly composed\" --body \"$\\(cat <<''EOF''\n**Severity**: High\n\n**Description**:\n`DatabaseDrizzleLayer` depends on the SQL client service provided by `DatabaseClientLayer`. Currently using `Layer.mergeAll` which places both layers side-by-side but does NOT feed one layer''s output into the other''s requirements.\n\nThe Drizzle layer''s dependency on `SqlClient` remains unsatisfied. The `as Effect.Effect<A, E, never>` cast in `withDatabase` hides this unsatisfied requirement at the type level, but at runtime any database operation through the Effect path \\(e.g. `pingDatabaseEffect`\\) will fail.\n\n**Location**: \n- `packages/db/src/index.ts#L25-L34`\n\n**Fix**:\nUse `Layer.provideMerge` \\(or equivalent composition\\) so `DatabaseClientLayer` feeds into `DatabaseDrizzleLayer`.\n\n**Bugbot ID**: 4b72bbf5-9d79-4968-b5e0-68eef5daa529\n**Source**: https://github.com/stefan-garofalo/torinojs-swarm/pull/1#discussion_r2899007943\nEOF\n\\)\")",
+      "Bash(gh issue create:*)"
     ]
   }
 }

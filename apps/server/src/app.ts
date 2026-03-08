@@ -12,3 +12,5 @@ export const createApp = (corsOrigin: string) =>
     .get("/", () => "OK")
 
 export const app = createApp(env.CORS_ORIGIN)
+
+export type App = typeof app;

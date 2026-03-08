@@ -1,6 +1,8 @@
 import DemoItemQueryPanel from "@/features/demo/components/demo-item-query";
 import { DemoItemServerPanel } from "@/features/demo/components/demo-item-server";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   return (
     <div className="container mx-auto max-w-4xl space-y-8 px-4 py-12">
