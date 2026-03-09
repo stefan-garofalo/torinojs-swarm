@@ -2,13 +2,36 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test"
 import { treaty } from "@elysiajs/eden"
 import type { App } from "@reaping/api"
 
-import { app } from "./app.js"
+const originalEnv = { ...process.env }
+const hasDatabaseEnv = Boolean(originalEnv.DATABASE_URL)
+
+const applyServerRuntimeEnv = () => {
+  const runtimeEnv = process.env as Record<string, string | undefined>
+
+  runtimeEnv.DATABASE_URL ??= "postgresql://demo:demo@localhost:5432/reaping"
+  runtimeEnv.DATABASE_URL_DIRECT ??= runtimeEnv.DATABASE_URL
+  runtimeEnv.BETTER_AUTH_SECRET ??= "12345678901234567890123456789012"
+  runtimeEnv.BETTER_AUTH_URL ??= "http://localhost:3000"
+  runtimeEnv.CORS_ORIGIN ??= "http://localhost:3001"
+  runtimeEnv.BETTER_AUTH_TRUSTED_ORIGINS ??=
+    "http://localhost:3001,https://trusted-preview.example.com"
+  runtimeEnv.GITHUB_CLIENT_ID ??= "github-client-id"
+  runtimeEnv.GITHUB_CLIENT_SECRET ??= "github-client-secret"
+  runtimeEnv.AI_PROVIDER ??= "gateway"
+  runtimeEnv.AI_GATEWAY_MODEL ??= "openai/gpt-5.4"
+  runtimeEnv.AI_OPENAI_MODEL ??= "gpt-5.4"
+  runtimeEnv.NODE_ENV = "test"
+}
 
 describe("app smoke", () => {
   let server: Bun.Server<undefined>
   let api: ReturnType<typeof treaty<App>>
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    applyServerRuntimeEnv()
+
+    const { app } = await import("./app.js")
+
     server = Bun.serve({
       fetch: app.fetch,
       port: 0,
@@ -19,6 +42,7 @@ describe("app smoke", () => {
 
   afterAll(() => {
     server.stop(true)
+    process.env = { ...originalEnv }
   })
 
   test("serves demo item through Treaty", async () => {
@@ -44,7 +68,7 @@ describe("app smoke", () => {
     })
   })
 
-  test("reports database health with the configured environment", async () => {
+  test.if(hasDatabaseEnv)("reports database health with the configured environment", async () => {
     const response = await api.api.demo.db.get()
 
     expect(response.error).toBeNull()
