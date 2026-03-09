@@ -88,7 +88,7 @@ T2 ──> T1 ──┬──> T3 ──┐
 - **location**: `apps/web/src/modules/auth/auth-client.ts`, `apps/web/src/app/api/auth/**`, `packages/api/src/modules/http/auth-plugin.ts`, `apps/server/src/**/*.test.ts`, optionally `apps/web/src/**/*.test.ts`
 - **description**: Resolve the split-host cookie problem by moving browser auth requests to the web host. Add a Next route handler under `apps/web` that proxies `/api/auth/*` to the server auth mount, preserving method, headers, body, redirect behavior, and `set-cookie` passthrough. Update `authClient` to use the web origin/same-origin auth base instead of `NEXT_PUBLIC_SERVER_URL`. Keep the Better Auth server mount unchanged on the API side. Add integration tests that cover: GitHub sign-in initiation redirect, mocked callback/session establishment through the mounted auth surface, unauthenticated session fetch, sign-out, explicit CSRF/origin rejection, and `429` on repeated sign-in initiation. Automated tests must mock the OAuth callback path; real GitHub credentials are manual-only.
 - **validation**: Browser/SSR auth traffic targets same-origin `/api/auth`; session cookies are readable by the web host; CSRF/origin checks still reject untrusted requests; DB-backed sign-in throttling returns `429`; sign-out clears the effective session.
-- **status**: Planned
+- **status**: In Progress
 - **log**:
 - **files edited/created**:
 - **backlog_item_id**: `TOR-60`
@@ -106,7 +106,7 @@ T2 ──> T1 ──┬──> T3 ──┐
   - an auth-layout guard that redirects already-authenticated users away from `/login` back to `/`
 Move the current protected placeholder experience to `/`, update header links to remove `/dashboard`, and make sign-out redirect to `/login` instead of `/`.
 - **validation**: Anonymous requests to `/` redirect to `/login`; authenticated requests to `/login` redirect to `/`; `/login` exposes GitHub only; no stale `/dashboard` navigation remains; sign-out lands on `/login`.
-- **status**: Planned
+- **status**: In Progress
 - **log**:
 - **files edited/created**:
 - **backlog_item_id**: `TOR-59`
