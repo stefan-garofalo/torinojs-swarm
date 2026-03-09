@@ -106,9 +106,9 @@ T2 ──> T1 ──┬──> T3 ──┐
   - an auth-layout guard that redirects already-authenticated users away from `/login` back to `/`
 Move the current protected placeholder experience to `/`, update header links to remove `/dashboard`, and make sign-out redirect to `/login` instead of `/`.
 - **validation**: Anonymous requests to `/` redirect to `/login`; authenticated requests to `/login` redirect to `/`; `/login` exposes GitHub only; no stale `/dashboard` navigation remains; sign-out lands on `/login`.
-- **status**: In Progress
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Replaced the password auth flow with route-group gating and a GitHub-only login entrypoint. Added `(auth)` and `(protected)` layouts so anonymous users are redirected from `/` to `/login`, authenticated users are redirected away from `/login`, and `/dashboard` plus password forms were removed. Updated header navigation and sign-out routing to target `/login`. Validation run: `bun run --cwd apps/web check-types`.
+- **files edited/created**: `apps/web/src/app/(auth)/layout.tsx`, `apps/web/src/app/(auth)/login/page.tsx`, `apps/web/src/app/(protected)/layout.tsx`, `apps/web/src/app/(protected)/page.tsx`, `apps/web/src/app/dashboard/page.tsx` (removed), `apps/web/src/app/dashboard/dashboard.tsx` (removed), `apps/web/src/app/login/page.tsx` (removed), `apps/web/src/app/page.tsx` (moved into protected group), `apps/web/src/modules/auth/components/user-menu.tsx`, `apps/web/src/modules/ui/header.tsx`, `apps/web/src/modules/auth/components/sign-in-form.tsx` (removed), `apps/web/src/modules/auth/components/sign-up-form.tsx` (removed)
 - **backlog_item_id**: `TOR-59`
 - **backlog_item_url**: `https://linear.app/stefan-projects/issue/TOR-59/tor-33-t4-replace-password-ui-and-enforce-the-hard-route-gate`
 - **relation_mode**: native
@@ -120,8 +120,8 @@ Move the current protected placeholder experience to `/`, update header links to
 - **location**: repo-wide validation commands, Linear `TOR-33`, git branch metadata
 - **description**: Run the final validation matrix end-to-end, then perform the non-code coordination steps for this task. Validation must include repo typechecks, targeted server/web auth tests, and a manual OAuth run with real GitHub credentials. Manual verification scope: GitHub login, logout, user persistence in `user`/`account`/`session`, rate-limit persistence in `rateLimit`, and no anonymous access outside the auth surface. After code work passes, rename the branch to `stefangarofalo/tor-33-authentication-system` and sync one child backlog item per task under `TOR-33`, carrying forward dependencies and TDD targets from this plan.
 - **validation**: `bun run check-types`, targeted auth tests, and manual GitHub auth verification succeed; branch name matches the required convention; Linear contains child tasks aligned with T1-T5.
-- **status**: Planned
-- **log**:
+- **status**: In Progress
+- **log**: Merged T2, T1, T3, and T4 onto `stefangarofalo/tor-33-authentication-system`. Validation passed for `bun run --cwd packages/db check-types`, `bun run --cwd packages/auth check-types`, `bun run --cwd packages/env check-types`, `bun run --cwd apps/web check-types`, and `bun run --cwd apps/web test src/app/api/auth/'[...path]'/route.test.ts`. Validation remains blocked for manual GitHub OAuth because local env files do not contain `GITHUB_CLIENT_ID` or `GITHUB_CLIENT_SECRET`. Existing repo-level issues also remain outside TOR-33 scope: `bun run --cwd apps/server test` fails because Bun cannot resolve `@reaping/env/server` from `apps/server/src/app.ts`, and root `bun run check-types` fails in `@reaping/server` on missing module `effect`.
 - **files edited/created**:
 - **backlog_item_id**: `TOR-61`
 - **backlog_item_url**: `https://linear.app/stefan-projects/issue/TOR-61/tor-33-t5-full-validation-branch-sync-and-manual-oauth-verification`
