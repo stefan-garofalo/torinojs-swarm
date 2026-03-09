@@ -8,7 +8,6 @@ export default function Header() {
   const links = [
     { to: "/", label: "Home" },
     { to: "/design-system", label: "Design System" },
-    { to: "/dashboard", label: "Dashboard" },
   ] as const;
 
   return (
