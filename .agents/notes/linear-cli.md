@@ -26,6 +26,11 @@ mutation {
 
 Meaning: `TOR-47` blocks `TOR-42`.
 
+### 0b. CLI Can Create Milestones But Cannot Assign Issues To Them
+CLI `1.9.1` supports `linear milestone create/list/update/delete`, but issue milestone assignment is only exposed in GraphQL via `issueUpdate(input: { projectMilestoneId })`.
+
+Use CLI for project milestone creation, then assign issues by API if you want waves represented directly on issues.
+
 ### 1. Team Key Required
 Linear CLI cannot determine team automatically. **ALWAYS** use `--team TOR` when creating issues, otherwise fails with:
 ```
