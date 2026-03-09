@@ -11,6 +11,10 @@ const applyServerRuntimeEnv = () => {
   runtimeEnv.BETTER_AUTH_SECRET = "12345678901234567890123456789012"
   runtimeEnv.BETTER_AUTH_URL = "http://localhost:3000"
   runtimeEnv.CORS_ORIGIN = "http://localhost:3001"
+  runtimeEnv.BETTER_AUTH_TRUSTED_ORIGINS =
+    "http://localhost:3001,https://trusted-preview.example.com"
+  runtimeEnv.GITHUB_CLIENT_ID = "github-client-id"
+  runtimeEnv.GITHUB_CLIENT_SECRET = "github-client-secret"
   runtimeEnv.AI_PROVIDER = "gateway"
   runtimeEnv.AI_GATEWAY_MODEL = "openai/gpt-5.4"
   delete runtimeEnv.AI_OPENAI_API_KEY
