@@ -74,9 +74,9 @@ T2 ──> T1 ──┬──> T3 ──┐
 - **location**: `packages/auth/src/index.ts`, `packages/env/src/server.ts`, `apps/server/.env.example`, `apps/web/.env.example`, `turbo.json`, `apps/server/turbo.json`, `apps/web/turbo.json`, auth test env helpers
 - **description**: Reconfigure `packages/auth` to remove credential login and enable GitHub social auth. Add `socialProviders.github` with `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, disable `emailAndPassword`, keep `httpOnly` cookies, and keep CSRF/origin checks enabled. Force Better Auth `rateLimit.enabled` on for runtime and tests, with `storage: "database"`. Expand trusted origins from `BETTER_AUTH_URL`, `CORS_ORIGIN`, and optional `BETTER_AUTH_TRUSTED_ORIGINS` entries so local and canonical deployed hosts are valid without turning off security checks. Update central env parsing, both app env examples, Turbo env allowlists, and test fixtures so both `apps/server` and `apps/web` SSR can boot with the new contract.
 - **validation**: Missing GitHub credentials fail fast during env parsing; auth initialization compiles with DB-backed rate limiting; trusted-origin config is explicit and does not require `disableCSRFCheck` or `disableOriginCheck`; build/test envs include the new vars.
-- **status**: Planned
-- **log**:
-- **files edited/created**:
+- **status**: Completed
+- **log**: Reconfigured `packages/auth` for GitHub-only login with DB-backed Better Auth rate limiting and explicit trusted-origin expansion via `BETTER_AUTH_TRUSTED_ORIGINS`. Extended the shared server env contract, both app `.env.example` files, Turbo env allowlists, and the SSR test helper env in `apps/web/src/modules/api/eden.server.test.ts`. Validation passed for `bun run --cwd packages/auth check-types`, `bun run --cwd packages/env check-types`, and `bun run --cwd apps/web check-types`. `bun test apps/web/src/modules/api/eden.server.test.ts` still fails on the pre-existing in-process runtime resolution issue for `@reaping/env/server`.
+- **files edited/created**: `packages/auth/src/index.ts`, `packages/env/src/server.ts`, `apps/server/.env.example`, `apps/web/.env.example`, `turbo.json`, `apps/server/turbo.json`, `apps/web/turbo.json`, `apps/web/src/modules/api/eden.server.test.ts`
 - **backlog_item_id**: `TOR-58`
 - **backlog_item_url**: `https://linear.app/stefan-projects/issue/TOR-58/tor-33-t1-reconfigure-better-auth-for-github-only-login`
 - **relation_mode**: native
