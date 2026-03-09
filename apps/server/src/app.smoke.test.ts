@@ -3,6 +3,29 @@ import { treaty } from "@elysiajs/eden"
 
 import type { App, EconomySnapshot } from "@reaping/api"
 
+const originalEnv = { ...process.env }
+const hasDatabaseEnv = Boolean(originalEnv.DATABASE_URL)
+
+const applyServerRuntimeEnv = () => {
+  const runtimeEnv = process.env as Record<string, string | undefined>
+
+  runtimeEnv.DATABASE_URL ??= "postgresql://demo:demo@localhost:5432/reaping"
+  runtimeEnv.DATABASE_URL_DIRECT ??= runtimeEnv.DATABASE_URL
+  runtimeEnv.UPSTASH_REDIS_REST_URL ??= "https://example.upstash.io"
+  runtimeEnv.UPSTASH_REDIS_REST_TOKEN ??= "test-upstash-token"
+  runtimeEnv.BETTER_AUTH_SECRET ??= "12345678901234567890123456789012"
+  runtimeEnv.BETTER_AUTH_URL ??= "http://127.0.0.1:3001"
+  runtimeEnv.CORS_ORIGIN ??= "http://127.0.0.1:3000"
+  runtimeEnv.BETTER_AUTH_TRUSTED_ORIGINS ??=
+    "http://127.0.0.1:3000,https://trusted-preview.example.com"
+  runtimeEnv.GITHUB_CLIENT_ID ??= "github-client-id"
+  runtimeEnv.GITHUB_CLIENT_SECRET ??= "github-client-secret"
+  runtimeEnv.AI_PROVIDER ??= "gateway"
+  runtimeEnv.AI_GATEWAY_MODEL ??= "openai/gpt-5.4"
+  runtimeEnv.AI_OPENAI_MODEL ??= "gpt-5.4"
+  runtimeEnv.NODE_ENV = "test"
+}
+
 describe("app smoke", () => {
   let server: Bun.Server<undefined>
   let api: ReturnType<typeof treaty<App>>
@@ -11,24 +34,14 @@ describe("app smoke", () => {
   let defaultGameSessionId: string
 
   beforeAll(async () => {
-    process.env.NODE_ENV = "test"
-    process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/reaping_test"
-    process.env.UPSTASH_REDIS_REST_URL ??= "https://example.upstash.io"
-    process.env.UPSTASH_REDIS_REST_TOKEN ??= "test-upstash-token"
-    process.env.BETTER_AUTH_SECRET ??= "test-secret-123456789012345678901234"
-    process.env.BETTER_AUTH_URL ??= "http://127.0.0.1:3001"
-    process.env.CORS_ORIGIN ??= "http://127.0.0.1:3000"
+    applyServerRuntimeEnv()
 
-    const apiModule = await import("@reaping/api")
-    const { createApp, DEFAULT_GAME_SESSION_ID, openBettingWindow: openWindow } = apiModule
+    const [{ app }, apiModule] = await Promise.all([import("./app.js"), import("@reaping/api")])
+    const { DEFAULT_GAME_SESSION_ID, openBettingWindow: openWindow } = apiModule
 
     openBettingWindow = openWindow
     resetGameSessionsForTests = apiModule.resetGameSessionsForTests
     defaultGameSessionId = DEFAULT_GAME_SESSION_ID
-
-    const app = createApp({
-      corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
-    })
 
     server = Bun.serve({
       fetch: app.fetch,
@@ -40,6 +53,7 @@ describe("app smoke", () => {
 
   afterAll(() => {
     server.stop(true)
+    process.env = { ...originalEnv }
   })
 
   test("serves demo item through Treaty", async () => {
@@ -65,7 +79,7 @@ describe("app smoke", () => {
     })
   })
 
-  test("reports database health with the configured environment", async () => {
+  test.if(hasDatabaseEnv)("reports database health with the configured environment", async () => {
     const response = await api.api.demo.db.get()
 
     expect(response.error).toBeNull()
