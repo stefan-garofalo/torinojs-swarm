@@ -22,15 +22,11 @@
     "test": "bun test ./src/app.smoke.test.ts"
   },
   "dependencies": {
-    "@elysiajs/cors": "^1.4.1",
-    "@reaping/auth": "workspace:*",
-    "@reaping/db": "workspace:*",
     "@reaping/ai": "workspace:*",
+    "@reaping/api": "workspace:*",
     "@reaping/env": "workspace:*",
-    "effect": "catalog:",
     "better-auth": "catalog:",
     "dotenv": "catalog:",
-    "elysia": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

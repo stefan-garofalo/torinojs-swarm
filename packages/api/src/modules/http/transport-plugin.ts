@@ -6,9 +6,11 @@ const isAllowedAuthMethod = (method: string): boolean =>
 
 export const mapHttpMethodError = (context: Context) => {
   const { request } = context
+
   if (!isAllowedAuthMethod(request.method)) {
     return status(405, "Method not allowed")
   }
+
   return null
 }
 
@@ -27,6 +29,7 @@ export const httpTransportPlugin = (corsOrigin: string) =>
     .onError(({ error, set }) => {
       console.error(error)
       set.status = DEFAULT_HTTP_ERROR_STATUS
+
       return {
         _tag: "UnhandledError",
         message: "Internal server error",

@@ -36,7 +36,21 @@ vercel link --yes --project reaping-server
   - `bun run deploy`
   - `bun run deploy:prod`
 - Required env:
+  - `NEXT_PUBLIC_APP_URL`
   - `NEXT_PUBLIC_SERVER_URL`
+  - `DATABASE_URL`
+  - `DATABASE_URL_DIRECT`
+  - `BETTER_AUTH_SECRET`
+  - `BETTER_AUTH_URL`
+  - `CORS_ORIGIN`
+  - `AI_PROVIDER`
+  - `AI_GATEWAY_MODEL`
+  - `AI_OPENAI_API_KEY`
+  - `AI_OPENAI_BASE_URL`
+  - `AI_OPENAI_MODEL`
+  - `NODE_ENV`
+
+The web project now performs in-process Eden calls during server rendering. That means its server runtime must be able to instantiate the same API app/runtime stack as `apps/server`, even though browser calls still use `NEXT_PUBLIC_SERVER_URL`.
 
 ### Server (`apps/server`)
 

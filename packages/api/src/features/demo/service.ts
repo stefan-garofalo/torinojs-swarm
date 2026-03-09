@@ -1,5 +1,6 @@
 import { Effect } from "effect"
 import { pingDatabaseEffect, withDatabase } from "@reaping/db"
+
 import { DemoDatabaseUnavailableError, DemoItemNotFoundError } from "./errors.js"
 
 export interface DemoItem {
@@ -24,6 +25,7 @@ export class DemoService extends Effect.Service<DemoService>()("DemoService", {
           ),
         ),
       )
+
       return { healthy: true }
     })
 

@@ -1,18 +1,10 @@
-import { env } from "@reaping/env/server";
-import { Elysia } from "elysia";
-import { authPlugin } from "./modules/http/auth-plugin.js";
-import { httpTransportPlugin } from "./modules/http/transport-plugin.js";
-import { demoDomain } from "./features/demo/index.js";
+import { createApp, type App } from "@reaping/api"
+import { env } from "@reaping/env/server"
 
-export const createApp = (corsOrigin: string) =>
-  new Elysia()
-    .use(httpTransportPlugin(corsOrigin))
-    .use(demoDomain)
-    .use(authPlugin)
-    .get("/health", () => "OK")
+export const app = createApp({
+  corsOrigin: env.CORS_ORIGIN,
+})
 
-export const app = createApp(env.CORS_ORIGIN)
+export default app
 
-export default app;
-
-export type App = typeof app;
+export type { App }

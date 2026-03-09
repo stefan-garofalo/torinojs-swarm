@@ -4,6 +4,7 @@ Keynote demo monorepo. Better-T-Stack scaffold, then rebuilt around:
 
 - `apps/server`: `Elysia` HTTP layer + `Effect` service/runtime layer
 - `apps/web`: `Next.js` App Router + `Eden Treaty` + `TanStack Query`
+- `packages/api`: reusable Elysia app contract/factory shared by server and SSR
 - `packages/db`: Drizzle schema + Effect SQL integration for Neon-hosted Postgres
 - `packages/auth`: Better Auth shared setup
 - `packages/ai`: shared AI SDK foundation
@@ -34,14 +35,14 @@ demo/
 │   ├── server/
 │   │   ├── api/                  # Vercel adapter entrypoint
 │   │   └── src/
-│   │       ├── modules/          # generic backend transport/infrastructure pieces
-│   │       └── features/         # backend business features
+│   │           # thin runtime/deploy adapter around @reaping/api
 │   └── web/
 │       └── src/
 │           ├── app/              # Next App Router entrypoints
 │           ├── modules/          # generic frontend building blocks
 │           └── features/         # frontend business features
 ├── packages/
+│   ├── api/                      # reusable Elysia app contract/factory
 │   ├── ai/                       # shared AI SDK foundation
 │   ├── auth/                     # Better Auth setup
 │   ├── config/                   # shared TS config
@@ -71,14 +72,14 @@ In `apps/web`, generated `shadcn` components belong under `src/modules/ui`. `com
 
 Core files:
 
+- `packages/api/src/index.ts`
+  - exports `createApp(...)` and the shared Elysia `App` type
 - `apps/server/src/app.ts`
-  - exports the reusable Elysia `app`
+  - server-owned configured `app` adapter
 - `apps/server/src/index.ts`
   - local Bun entrypoint
 - `apps/server/api/index.ts`
   - Vercel handler shim
-- `apps/server/src/runtime.ts`
-  - Effect runtime composition
 
 ### Request flow
 
@@ -90,11 +91,7 @@ Core files:
 
 ### Current backend example
 
-The demo feature lives in:
-
-- `apps/server/src/features/demo/errors.ts`
-- `apps/server/src/features/demo/service.ts`
-- `apps/server/src/features/demo/routes.ts`
+The demo feature now lives under `packages/api/src/features/demo`.
 
 It demonstrates:
 
@@ -131,7 +128,9 @@ Rule: route code should not create DB clients inline.
 Core files:
 
 - `apps/web/src/modules/api/eden.ts`
-  - isomorphic Eden client entrypoint
+  - browser HTTP Eden client
+- `apps/web/src/modules/api/eden.server.ts`
+  - server-only in-process Eden client
 - `apps/web/src/modules/app/providers.tsx`
   - app-level providers including TanStack Query
 - `apps/web/src/features/demo/queries.ts`
@@ -139,16 +138,17 @@ Core files:
 
 ### Contract flow
 
-- `apps/web` can consume the public package export `@reaping/server/app` as a type-only contract surface.
+- `apps/web` consumes `@reaping/api` as the contract source.
 - In the browser, Eden calls `NEXT_PUBLIC_SERVER_URL`.
+- During server rendering, `apps/web` instantiates the Elysia app in-process and calls it with `treaty(app)`.
 
 Important boundary:
 
-- `apps/web` must only consume `@reaping/server/app`
+- `apps/web` must only consume `@reaping/api`
 - never import `server/src/*`
 - never point frontend TS paths into server internals
 
-That boundary is required for the two-project Vercel deployment model.
+That keeps the shared contract reusable while leaving `apps/server` as the dedicated HTTP deploy target.
 
 ### Query rule
 
@@ -230,8 +230,22 @@ NODE_ENV=development
 Create `apps/web/.env` from `apps/web/.env.example`.
 
 ```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3001
 NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+DATABASE_URL=
+DATABASE_URL_DIRECT=
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3001
+AI_PROVIDER=gateway
+AI_GATEWAY_MODEL=openai/gpt-5.4
+AI_OPENAI_API_KEY=
+AI_OPENAI_BASE_URL=
+AI_OPENAI_MODEL=gpt-5.4
+NODE_ENV=development
 ```
+
+Only `NEXT_PUBLIC_*` values are exposed to the browser. The extra server vars are required so the web server runtime can instantiate `@reaping/api` during SSR.
 
 ## Local Development
 
@@ -284,12 +298,12 @@ More detail:
 
 ## Adding A New Backend Feature
 
-1. Create a feature folder under `apps/server/src/features/<feature>`.
+1. Create a feature folder under `packages/api/src/features/<feature>`.
 2. Define domain errors there.
 3. Define an `Effect.Service` for business logic.
 4. Add Elysia routes that call the service.
 5. Declare explicit response schemas for success and non-success statuses.
-6. Mount the feature plugin from `apps/server/src/app.ts`.
+6. Mount the feature plugin from `packages/api/src/index.ts`.
 
 Rule: transport stays in route/plugin code; business logic stays in Effect services.
 

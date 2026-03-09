@@ -1,31 +1,28 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query"
 
-import { getDemoApiClient } from "@/modules/api/eden";
+import { getDemoApiClient, type DemoApiClient } from "@/modules/api/eden"
 
-export const demoItemId = "demo-1" as const;
+export const demoItemId = "demo-1" as const
 
-const getDemoApi = () => getDemoApiClient();
-
-type DemoItemRoute = ReturnType<ReturnType<typeof getDemoApiClient>["api"]["demo"]["items"]>;
-type DemoItemResponse = Awaited<ReturnType<DemoItemRoute["get"]>>;
-type DemoItemError = Exclude<DemoItemResponse["error"], null>;
+type DemoItemRoute = ReturnType<DemoApiClient["api"]["demo"]["items"]>
+type DemoItemResponse = Awaited<ReturnType<DemoItemRoute["get"]>>
+type DemoItemError = Exclude<DemoItemResponse["error"], null>
 
 const getDemoItemErrorMessage = (error: DemoItemError) => {
-  const { value } = error;
+  const { value } = error
 
   if ("message" in value && typeof value.message === "string") {
-    return value.message;
+    return value.message
   }
 
-  return `Request failed with status ${error.status}`;
-};
+  return `Request failed with status ${error.status}`
+}
 
-export const fetchDemoItem = async () => {
-  const api = getDemoApi();
-  const response = await api.api.demo.items({ id: demoItemId }).get();
+export const fetchDemoItemWithApi = async (api: DemoApiClient) => {
+  const response = await api.api.demo.items({ id: demoItemId }).get()
 
   if (!response.error) {
-    return response;
+    return response
   }
 
   return {
@@ -34,25 +31,25 @@ export const fetchDemoItem = async () => {
       ...response.error,
       message: getDemoItemErrorMessage(response.error),
     },
-  };
-};
+  }
+}
 
-export type DemoItemResult = Awaited<ReturnType<typeof fetchDemoItem>>;
+export const fetchDemoItem = async () => fetchDemoItemWithApi(getDemoApiClient())
+
+export type DemoItemResult = Awaited<ReturnType<typeof fetchDemoItemWithApi>>
 
 export const demoItemQueryOptions = queryOptions({
   queryKey: ["demo-item", demoItemId],
   queryFn: fetchDemoItem,
-});
+})
 
-export const fetchDemoDbStatus = async () => {
-  const api = getDemoApi();
+export const fetchDemoDbStatusWithApi = async (api: DemoApiClient) => api.api.demo.db.get()
 
-  return api.api.demo.db.get();
-};
+export const fetchDemoDbStatus = async () => fetchDemoDbStatusWithApi(getDemoApiClient())
 
-export type DemoDbResult = Awaited<ReturnType<typeof fetchDemoDbStatus>>;
+export type DemoDbResult = Awaited<ReturnType<typeof fetchDemoDbStatusWithApi>>
 
 export const demoDbQueryOptions = queryOptions({
   queryKey: ["demo-db-status"],
   queryFn: fetchDemoDbStatus,
-});
+})
