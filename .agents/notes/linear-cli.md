@@ -8,6 +8,24 @@
 
 ## Key Gotchas
 
+### 0. CLI Does Not Expose Issue Blocker Relations
+Linear has native issue relations (`blocks`, `related`, `duplicate`, `similar`) in GraphQL, but CLI `1.9.1` does not expose `linear issue relation ...` or blocker flags on `linear issue update`.
+
+**Workaround:** use GraphQL mutation `issueRelationCreate` against `https://api.linear.app/graphql`, typically with:
+```graphql
+mutation {
+  issueRelationCreate(input: {
+    issueId: "TOR-47"
+    relatedIssueId: "TOR-42"
+    type: blocks
+  }) {
+    success
+  }
+}
+```
+
+Meaning: `TOR-47` blocks `TOR-42`.
+
 ### 1. Team Key Required
 Linear CLI cannot determine team automatically. **ALWAYS** use `--team TOR` when creating issues, otherwise fails with:
 ```
