@@ -1,0 +1,14 @@
+.retro {
+  font-family:
+    "Press Start 2P",
+    "Geist Mono",
+    monospace;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
