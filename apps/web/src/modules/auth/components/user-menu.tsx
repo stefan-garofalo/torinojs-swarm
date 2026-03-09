@@ -12,7 +12,7 @@ import {
 } from "@/modules/ui/dropdown-menu";
 import { authClient } from "@/modules/auth/auth-client";
 
-import { Button } from "@/modules/ui/button";
+import { Button } from "@/modules/ui/8bit";
 import { Skeleton } from "@/modules/ui/skeleton";
 
 export default function UserMenu() {
@@ -26,14 +26,14 @@ export default function UserMenu() {
   if (!session) {
     return (
       <Link href="/login">
-        <Button variant="outline">Sign In</Button>
+        <Button variant="outline" size="sm">Sign In</Button>
       </Link>
     );
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" />}>
+      <DropdownMenuTrigger render={<Button variant="outline" size="sm" />}>
         {session.user.name}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-card">

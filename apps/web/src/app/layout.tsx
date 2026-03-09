@@ -1,26 +1,28 @@
 import type { Metadata } from "next";
 import { env } from "@reaping/env/web";
 
-import { Geist, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Mono, Silkscreen } from "next/font/google";
 
 import "../index.css";
 import Header from "@/modules/ui/header";
 import Providers from "@/modules/app/providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const reapingDisplay = Silkscreen({
+  variable: "--font-reaping-display",
+  weight: ["400", "700"],
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const reapingMono = IBM_Plex_Mono({
+  variable: "--font-reaping-mono",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
-  title: "reaping",
-  description: "reaping",
+  title: "The Reaping",
+  description: "Retro-dark UI foundation for the TorinoJS Reaping demo.",
 };
 
 export default function RootLayout({
@@ -29,10 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${reapingDisplay.variable} ${reapingMono.variable} antialiased`}>
         <Providers>
-          <div className="grid grid-rows-[auto_1fr] h-svh">
+          <div className="relative z-10 grid min-h-svh grid-rows-[auto_1fr]">
             <Header />
             {children}
           </div>

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider } from "@/modules/theme/theme-provider";
 import { Toaster } from "@/modules/ui/sonner";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -21,14 +20,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <QueryClientProvider client={queryClient}>
-        {children}
-        {process.env.NODE_ENV !== "production" && (
-          <ReactQueryDevtools initialIsOpen={false} position="bottom" />
-        )}
-      </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      {children}
+      {process.env.NODE_ENV !== "production" && (
+        <ReactQueryDevtools initialIsOpen={false} position="bottom" />
+      )}
       <Toaster richColors />
-    </ThemeProvider>
+    </QueryClientProvider>
   );
 }
