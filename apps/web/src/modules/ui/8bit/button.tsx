@@ -12,12 +12,12 @@ const eightBitButtonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-[0_0_24px_rgba(178,46,34,0.24)] hover:bg-[color:color-mix(in_oklab,var(--primary)_88%,black)]",
+          "bg-primary text-primary-foreground shadow-[0_0_20px_oklch(0.15_0.092_8_/_0.6)] hover:bg-[color:color-mix(in_oklab,var(--primary)_92%,black)]",
         outline:
-          "bg-card/90 text-foreground shadow-[inset_0_0_0_1px_var(--terminal-edge),0_0_0_1px_rgba(255,255,255,0.04)] hover:bg-secondary/80",
+          "bg-card/90 text-foreground shadow-[inset_0_0_0_1px_var(--terminal-edge),0_0_0_1px_oklch(0.38_0.022_8_/_0.02)] hover:bg-secondary/80",
         ghost: "bg-transparent text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
         terminal:
-          "bg-[rgba(255,196,125,0.06)] text-[var(--terminal-amber)] shadow-[0_0_18px_rgba(255,196,125,0.12)] hover:bg-[rgba(255,196,125,0.12)]",
+          "bg-[oklch(0.70_0.060_9_/_0.04)] text-[var(--terminal-phosphor)] shadow-[0_0_12px_oklch(0.70_0.060_9_/_0.06)] hover:bg-[oklch(0.70_0.060_9_/_0.08)]",
       },
       size: {
         default: "",

@@ -59,10 +59,10 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
   return (
     <Card className="mx-auto mt-10 w-full max-w-xl">
       <CardHeader>
-        <Badge className="bg-primary/14 text-primary-foreground">Authenticated access</Badge>
-        <CardTitle className="text-base md:text-xl">Welcome back to the cabinet</CardTitle>
+        <Badge className="bg-primary/14 text-primary-foreground">VERIFICATION</Badge>
+        <CardTitle className="text-base md:text-xl">IDENTITY REQUIRED</CardTitle>
         <CardDescription>
-          Sign in and reclaim your spectator seat before the dealer starts assigning consequences.
+          Submit credentials to regain terminal access. The system does not recognize unauthorized presences.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -78,7 +78,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
             <form.Field name="email">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor={field.name}>Email</Label>
+                  <Label htmlFor={field.name}>EMAIL</Label>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -101,7 +101,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
             <form.Field name="password">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor={field.name}>Password</Label>
+                  <Label htmlFor={field.name}>PASSWORD</Label>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -132,16 +132,16 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
                 className="w-full"
                 disabled={!state.canSubmit || state.isSubmitting}
               >
-                {state.isSubmitting ? "Submitting..." : "Sign In"}
+                {state.isSubmitting ? "VERIFYING..." : "AUTHENTICATE"}
               </Button>
             )}
           </form.Subscribe>
         </form>
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <p className="retro-copy text-sm text-muted-foreground">No seat assigned yet?</p>
+          <p className="retro-copy text-sm text-muted-foreground">No credentials registered?</p>
           <Button variant="outline" size="sm" onClick={onSwitchToSignUp}>
-            Need an account? Sign Up
+            Create Record
           </Button>
         </div>
       </CardContent>

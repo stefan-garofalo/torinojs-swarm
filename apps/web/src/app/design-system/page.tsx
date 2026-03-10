@@ -132,12 +132,12 @@ export default function DesignSystemPage() {
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="pixel-frame flex min-h-32 items-center justify-center bg-black/25 p-6">
-                <div className="flicker-soft flex flex-col items-center gap-3">
+                <div className="flex flex-col items-center gap-3">
                   <span className="status-led h-3 w-3 bg-primary" />
                   <span className="retro-display text-[0.52rem]">Signal pulse</span>
                 </div>
               </div>
-              <div className="terminal-panel flex min-h-32 items-center justify-center p-6">
+              <div className="terminal-panel flicker-soft flex min-h-32 items-center justify-center p-6">
                 <span className="retro-display terminal-copy text-[0.52rem]">Soft flicker</span>
               </div>
             </CardContent>

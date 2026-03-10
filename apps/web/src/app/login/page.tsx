@@ -14,24 +14,26 @@ export default function LoginPage() {
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <Card className="order-2 lg:order-1">
           <CardHeader>
-            <Badge className="bg-primary/14 text-primary-foreground">Access Gate</Badge>
-            <CardTitle className="text-base md:text-xl">Mandatory sign-in before the feed opens</CardTitle>
+            <Badge className="bg-primary/14 text-primary-foreground">RESTRICTED</Badge>
+            <CardTitle className="text-base md:text-xl">AUTHENTICATION REQUIRED</CardTitle>
             <CardDescription>
-              This story keeps the existing auth behavior intact. The change here is presentation: the auth
-              flow now lives inside the same cabinet language as the rest of the app.
+              Identity verification mandatory before terminal access. The authentication protocol has been
+              assimilated into the monochrome decay of the entire system.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="pixel-frame bg-black/20 p-4">
-              <p className="retro-display mb-3 text-[0.52rem] text-accent">Current mode</p>
+            <div className="pixel-frame bg-black/30 p-4">
+              <p className="retro-display mb-3 text-[0.52rem] text-accent">CREDENTIALS</p>
               <p className="retro-copy text-sm leading-6 text-muted-foreground">
-                Email/password remains in place for now. GitHub OAuth is handled by a separate issue.
+                Email/password authentication persists. External OAuth gateways remain isolated from this
+                implementation.
               </p>
             </div>
-            <div className="pixel-frame bg-black/20 p-4">
-              <p className="retro-display mb-3 text-[0.52rem] text-accent">Scope</p>
+            <div className="pixel-frame bg-black/30 p-4">
+              <p className="retro-display mb-3 text-[0.52rem] text-accent">CONSTRAINT</p>
               <p className="retro-copy text-sm leading-6 text-muted-foreground">
-                TOR-48 proves the shell and auth routes can share the same design system before betting or combat UI exists.
+                TOR-48 demonstrates unified visual degradation across shell and auth surfaces before state
+                tracking corruption begins.
               </p>
             </div>
           </CardContent>

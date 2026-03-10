@@ -62,10 +62,10 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
   return (
     <Card className="mx-auto mt-10 w-full max-w-xl">
       <CardHeader>
-        <Badge className="bg-primary/14 text-primary-foreground">Intake protocol</Badge>
-        <CardTitle className="text-base md:text-xl">Create your watcher profile</CardTitle>
+        <Badge className="bg-primary/14 text-primary-foreground">REGISTRATION</Badge>
+        <CardTitle className="text-base md:text-xl">ESTABLISH NEW IDENTITY</CardTitle>
         <CardDescription>
-          Register before the dealer tallies who gets to remain behind the glass.
+          Submit credentials to create a monitored presence within the terminal network.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -81,7 +81,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
             <form.Field name="name">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor={field.name}>Name</Label>
+                  <Label htmlFor={field.name}>IDENTIFIER</Label>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -103,7 +103,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
             <form.Field name="email">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor={field.name}>Email</Label>
+                  <Label htmlFor={field.name}>EMAIL</Label>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -126,7 +126,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
             <form.Field name="password">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor={field.name}>Password</Label>
+                  <Label htmlFor={field.name}>PASSWORD</Label>
                   <Input
                     id={field.name}
                     name={field.name}
@@ -157,16 +157,16 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
                 className="w-full"
                 disabled={!state.canSubmit || state.isSubmitting}
               >
-                {state.isSubmitting ? "Submitting..." : "Sign Up"}
+                {state.isSubmitting ? "PROCESSING..." : "REGISTER"}
               </Button>
             )}
           </form.Subscribe>
         </form>
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <p className="retro-copy text-sm text-muted-foreground">Already inside?</p>
+          <p className="retro-copy text-sm text-muted-foreground">Credentials already exist?</p>
           <Button variant="outline" size="sm" onClick={onSwitchToSignIn}>
-            Already have an account? Sign In
+            Authenticate Instead
           </Button>
         </div>
       </CardContent>

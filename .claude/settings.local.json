@@ -8,7 +8,12 @@
       "Bash(git commit:*)",
       "Bash(gh pr view:*)",
       "Bash(gh api:*)",
-      "Bash(gh issue create:*)"
+      "Bash(gh issue create:*)",
+      "Skill(frontend-design)",
+      "Bash(lsof:*)",
+      "Skill(agent-browser)",
+      "Bash(agent-browser:*)",
+      "Bash(agent-browser screenshot:*)"
     ]
   }
 }
