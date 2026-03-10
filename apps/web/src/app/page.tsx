@@ -20,68 +20,68 @@ export default async function Home() {
         <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
           <Card className="overflow-hidden">
             <CardHeader>
-              <p className="retro-display text-[0.56rem] text-accent">Mandatory spectatorship</p>
+              <p className="retro-display text-[0.56rem] text-accent">SURVEILLANCE ACTIVE</p>
               <CardTitle className="max-w-3xl text-base md:text-xl">
-                The cabinet finally looks like it can choose who survives
+                THE TERMINAL DOES NOT REMEMBER WHO YOU WERE
               </CardTitle>
               <CardDescription>
-                TOR-48 replaces the default starter shell with a retro-dark broadcast surface. The design
-                system route, tokens, and 8bit primitives are now the visual contract for the next UI stories.
+                TOR-48 erases the warm nostalgia with dead phosphor glow. Monochrome decay, oppressive
+                shadows, and abandoned system aesthetics define the new visual prison.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
-              <div className="pixel-frame bg-black/20 p-4">
-                <p className="retro-display mb-3 text-[0.52rem] text-accent">Foundation</p>
+              <div className="pixel-frame bg-black/30 p-4">
+                <p className="retro-display mb-3 text-[0.52rem] text-accent">CORRUPTED</p>
                 <p className="retro-copy text-sm leading-6 text-muted-foreground">
-                  Local 8bit primitives replace generic shell chrome.
+                  Grim primitives consume the interface. Color has been purged.
                 </p>
               </div>
-              <div className="pixel-frame bg-black/20 p-4">
-                <p className="retro-display mb-3 text-[0.52rem] text-accent">Shell</p>
+              <div className="pixel-frame bg-black/30 p-4">
+                <p className="retro-display mb-3 text-[0.52rem] text-accent">STATIC</p>
                 <p className="retro-copy text-sm leading-6 text-muted-foreground">
-                  Dark-only tokens, CRT atmosphere, and cabinet framing.
+                  Dead monitor aesthetics. Cold shadows. Grayscale oppression.
                 </p>
               </div>
-              <div className="pixel-frame bg-black/20 p-4">
-                <p className="retro-display mb-3 text-[0.52rem] text-accent">Downstream</p>
+              <div className="pixel-frame bg-black/30 p-4">
+                <p className="retro-display mb-3 text-[0.52rem] text-accent">PROPAGATED</p>
                 <p className="retro-copy text-sm leading-6 text-muted-foreground">
-                  TOR-49 and TOR-50 inherit the same UI language instead of reinventing it.
+                  The decay spreads to downstream systems. No escape.
                 </p>
               </div>
             </CardContent>
             <CardFooter className="flex flex-wrap items-center gap-3">
               <Link href="/design-system">
-                <Button size="sm">Open Design System</Button>
+                <Button size="sm">INSPECT RUINS</Button>
               </Link>
               <Link href="/login">
-                <Button variant="outline" size="sm">Enter Auth Gate</Button>
+                <Button variant="outline" size="sm">ACCESS DENIED</Button>
               </Link>
-              <Badge className="bg-primary/14 text-primary-foreground">8bitcn-adapted</Badge>
+              <Badge className="bg-primary/14 text-primary-foreground">MONOCHROME</Badge>
             </CardFooter>
           </Card>
 
           <Card>
             <CardHeader>
-              <p className="retro-display text-[0.56rem] text-accent">Runtime Feed</p>
-              <CardTitle>Implementation status</CardTitle>
+              <p className="retro-display text-[0.56rem] text-accent">SYSTEM LOG</p>
+              <CardTitle>DEGRADATION STATUS</CardTitle>
               <CardDescription>
-                TOR-48 intentionally stops at reusable UI foundation. The next stories will plug actual
-                betting, action-log, and state widgets into this shell.
+                TOR-48 stops at visual annihilation. Further corruption will inject state tracking,
+                ghostly feeds, and surveillance widgets into this decaying shell.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="pixel-frame bg-black/20 p-4">
-                <p className="retro-display mb-3 text-[0.52rem] text-accent">Delivered now</p>
+              <div className="pixel-frame bg-black/30 p-4">
+                <p className="retro-display mb-3 text-[0.52rem] text-accent">IMPLEMENTED</p>
                 <p className="retro-copy text-sm leading-6 text-muted-foreground">
-                  Dark-only tokens, local 8bit primitives, CRT styling, responsive auth screens, and a
-                  live design-system route.
+                  Monochrome tokens, dead phosphor glow, static grain, oppressive shadows, and a
+                  lifeless design-system morgue.
                 </p>
               </div>
-              <div className="pixel-frame bg-black/20 p-4">
-                <p className="retro-display mb-3 text-[0.52rem] text-accent">Deferred to next issues</p>
+              <div className="pixel-frame bg-black/30 p-4">
+                <p className="retro-display mb-3 text-[0.52rem] text-accent">AWAITING CORRUPTION</p>
                 <p className="retro-copy text-sm leading-6 text-muted-foreground">
-                  Wallet displays, betting windows, HP bars, action feeds, and combat transitions remain
-                  intentionally out of scope for this branch.
+                  Surveillance feeds, decay meters, ghost traces, static bursts, and terminal
+                  malfunctions remain outside this iteration.
                 </p>
               </div>
             </CardContent>

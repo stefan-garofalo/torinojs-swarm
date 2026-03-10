@@ -54,4 +54,5 @@ opensrc/
 
 .claude/settings.local.json
 .vercel
-.dmux/
+.dmux
+.claude/settings.local.json.dmux/
