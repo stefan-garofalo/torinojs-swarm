@@ -2,6 +2,8 @@
 
 - Package-level `apps/*/turbo.json` files must include `extends: ["//"]`. Omitting that root inheritance breaks package-local overrides.
 - Package-level Turbo config in this repo is for outputs/persistent task behavior only. Adding unsupported local keys causes parse failures.
+- When an app-level `turbo.json` sets `tasks.<name>.env`, that array becomes the effective allowlist for that task. Root `turbo.json` env additions do not automatically flow into those app task definitions, so infra env rollouts like Upstash need both layers kept aligned.
+- Workspace packages here export runtime code from `dist/**`, not `src/**`. If an app test executes workspace packages directly, Turbo `test` must depend on `^build` or the test can silently run stale package output even when local source changed.
 - `opensrc --modify deny` behaved inconsistently here. Use `opensrc --modify false` for non-destructive source fetches.
 - Linear CLI refuses `--workspace` when `LINEAR_API_KEY` is set. Team/project creation has to match the API key's default workspace unless the env or login context changes.
 - `gh repo create` pushed this repo to `master` by default. Set branch naming explicitly if a new repo must start on `main`.

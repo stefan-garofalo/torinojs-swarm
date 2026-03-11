@@ -6,11 +6,11 @@
   "exports": {
     "./server": {
       "types": "./src/server.ts",
-      "default": "./dist/src/server.js"
+      "default": "./src/server.ts"
     },
     "./web": {
       "types": "./src/web.ts",
-      "default": "./dist/src/web.js"
+      "default": "./src/web.ts"
     }
   },
   "dependencies": {
