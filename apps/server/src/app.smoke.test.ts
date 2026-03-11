@@ -1,9 +1,21 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test"
 import { treaty } from "@elysiajs/eden"
 import type { App } from "@reaping/api"
+import { config } from "dotenv"
+import { execFileSync } from "node:child_process"
+import { existsSync } from "node:fs"
+import { fileURLToPath } from "node:url"
+
+const localEnvPath = fileURLToPath(new URL("../.env", import.meta.url))
+const gitCommonDir = execFileSync("git", ["rev-parse", "--git-common-dir"], {
+  encoding: "utf8",
+}).trim()
+const sharedEnvPath = fileURLToPath(new URL("../apps/server/.env", `file://${gitCommonDir}/`))
+const envPath = existsSync(localEnvPath) ? localEnvPath : sharedEnvPath
+
+config({ path: envPath, override: false })
 
 const originalEnv = { ...process.env }
-const hasDatabaseEnv = Boolean(originalEnv.DATABASE_URL)
 
 const applyServerRuntimeEnv = () => {
   const runtimeEnv = process.env as Record<string, string | undefined>
@@ -68,7 +80,7 @@ describe("app smoke", () => {
     })
   })
 
-  test.if(hasDatabaseEnv)("reports database health with the configured environment", async () => {
+  test("reports database health with the configured environment", async () => {
     const response = await api.api.demo.db.get()
 
     expect(response.error).toBeNull()
