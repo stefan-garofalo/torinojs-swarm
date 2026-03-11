@@ -13,6 +13,7 @@ import {
 } from "./betting.js";
 import {
   BetAmountTooLowError,
+  BetRequestConflictError,
   BettingWindowClosedError,
   BetQuoteNotFoundError,
   GameRuntimeError,
@@ -29,6 +30,7 @@ import type { ParticipantWalletState } from "./wallet.js";
 
 type GameServiceError =
   | BetAmountTooLowError
+  | BetRequestConflictError
   | BettingWindowClosedError
   | BetQuoteNotFoundError
   | GameRuntimeError
@@ -132,6 +134,7 @@ function tryGamePromise<A>(thunk: () => Promise<A>): Effect.Effect<A, GameServic
 function toGameServiceError(error: unknown): GameServiceError {
   if (
     error instanceof BetAmountTooLowError ||
+    error instanceof BetRequestConflictError ||
     error instanceof BettingWindowClosedError ||
     error instanceof BetQuoteNotFoundError ||
     error instanceof GameSessionNotFoundError ||

@@ -19,6 +19,7 @@ import {
 } from "./bet-catalog.js";
 import {
   BetAmountTooLowError,
+  BetRequestConflictError,
   BettingWindowClosedError,
   BetQuoteNotFoundError,
   GameSessionNotFoundError,
@@ -174,17 +175,14 @@ export function createBettingApi(store: BettingStore) {
 
       try {
         return await store.createGameSession(createEmptyGameSession(sessionId));
-      } catch {
+      } catch (error) {
         const raced = await store.getGameSession(sessionId);
 
         if (raced !== null) {
           return raced;
         }
 
-        throw new GameSessionNotFoundError({
-          sessionId,
-          message: `No game session found for "${sessionId}"`,
-        });
+        throw error;
       }
     },
     openBettingWindow: async (input: OpenBettingWindowInput): Promise<BettingWindowState> => {
@@ -245,6 +243,20 @@ export function createBettingApi(store: BettingStore) {
         );
 
         if (existingPlacedBet !== null) {
+          if (
+            existingPlacedBet.betId !== input.betId ||
+            existingPlacedBet.amount !== input.amount
+          ) {
+            throw new BetRequestConflictError({
+              requestId: input.requestId,
+              existingBetId: existingPlacedBet.betId,
+              requestedBetId: input.betId,
+              existingAmount: existingPlacedBet.amount,
+              requestedAmount: input.amount,
+              message: `Request "${input.requestId}" was already used for a different bet payload`,
+            });
+          }
+
           persistedBet = existingPlacedBet;
           return current;
         }
@@ -267,6 +279,7 @@ export function createBettingApi(store: BettingStore) {
           amount: input.amount,
           placedAt,
           quote,
+          quoteSnapshotId: bettingWindow.quoteSnapshotId,
           requestId: input.requestId,
           round: current.round,
           userId: input.userId,
@@ -292,7 +305,7 @@ export function createBettingApi(store: BettingStore) {
                 requestId: input.requestId,
                 betId: input.betId,
                 amount: input.amount,
-                quoteSnapshotId: quote.id,
+                quoteSnapshotId: bettingWindow.quoteSnapshotId,
               },
             }),
           ],
@@ -610,7 +623,7 @@ function getRequiredOpenBettingWindow(
   if (
     bettingWindow === null ||
     envelope.phase !== "betting" ||
-    Date.parse(nowIso) > Date.parse(bettingWindow.closesAt)
+    Date.parse(nowIso) >= Date.parse(bettingWindow.closesAt)
   ) {
     throw new BettingWindowClosedError({
       sessionId: envelope.sessionId,
@@ -666,6 +679,7 @@ function createPlacedBet(input: {
   amount: number;
   placedAt: string;
   quote: BetQuote;
+  quoteSnapshotId: string;
 }): PlacedBet {
   return {
     requestId: input.requestId,
@@ -674,7 +688,7 @@ function createPlacedBet(input: {
     round: input.round,
     amount: input.amount,
     payoutMultiplier: input.quote.payoutMultiplier,
-    quoteSnapshotId: input.quote.id,
+    quoteSnapshotId: input.quoteSnapshotId,
     pricingMode: input.quote.pricingMode,
     placedAt: input.placedAt,
   };

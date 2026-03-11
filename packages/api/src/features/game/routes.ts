@@ -6,6 +6,7 @@ import { AppRuntime } from "../../runtime.js";
 import { DEFAULT_GAME_SESSION_ID } from "./betting.js";
 import {
   BetAmountTooLowError,
+  BetRequestConflictError,
   BetQuoteNotFoundError,
   BettingWindowClosedError,
   GameRuntimeError,
@@ -264,6 +265,7 @@ export const gameRoutes = new Elysia({ prefix: "/api/game" })
 function mapGameError(
   error:
     | BetAmountTooLowError
+    | BetRequestConflictError
     | BettingWindowClosedError
     | BetQuoteNotFoundError
     | GameRuntimeError
@@ -284,6 +286,7 @@ function mapGameError(
 
   if (
     error instanceof BettingWindowClosedError ||
+    error instanceof BetRequestConflictError ||
     error instanceof InsufficientAvailableBalanceError ||
     error instanceof ParticipantIneligibleToBetError
   ) {

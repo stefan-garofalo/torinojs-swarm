@@ -7,6 +7,7 @@ import {
 } from "@reaping/redis";
 
 import {
+  createBettingApi,
   getEconomySnapshot,
   MINIMUM_BET_AMOUNT,
   openBettingWindow,
@@ -14,6 +15,7 @@ import {
   settleRoundBets,
 } from "./betting.js";
 import {
+  BetRequestConflictError,
   InsufficientAvailableBalanceError,
   ParticipantIneligibleToBetError,
 } from "./errors.js";
@@ -97,9 +99,57 @@ describe("game betting lifecycle", () => {
     });
 
     expect(first.placedBet).toEqual(duplicate.placedBet);
+    expect(first.placedBet.quoteSnapshotId).toBe(bettingWindow.quoteSnapshotId);
     expect(second.economy.activeBets).toHaveLength(2);
+    expect(second.economy.activeBets[0]?.quoteSnapshotId).toBe(bettingWindow.quoteSnapshotId);
     expect(second.economy.participant?.lockedFunds).toBe(150);
     expect(second.economy.participant?.availableBalance).toBe(joined.walletBalance - 150);
+    expect(
+      second.economy.economyEvents.find((event) => event.type === "bet-placed")?.payload
+        .quoteSnapshotId,
+    ).toBe(bettingWindow.quoteSnapshotId);
+  });
+
+  test("rejects duplicate request ids when the payload changes", async () => {
+    await createGameSession(createEnvelope({ sessionId: "session-dup" }));
+
+    await joinGameSession({
+      sessionId: "session-dup",
+      userId: "user-dup",
+      joinedAt: "2026-03-10T12:02:00.000Z",
+      random: createRandomSequence([0.75, 0.25]),
+    });
+
+    await openBettingWindow({
+      sessionId: "session-dup",
+      openedAt: "2026-03-10T12:02:10.000Z",
+      playerHp: 4,
+      aiHp: 4,
+      magazine: {
+        liveRounds: 2,
+        blankRounds: 2,
+      },
+    });
+
+    await placeBet({
+      sessionId: "session-dup",
+      userId: "user-dup",
+      requestId: "req-dup",
+      betId: "player-survives-round",
+      amount: 25,
+      placedAt: "2026-03-10T12:02:11.000Z",
+    });
+
+    await expect(
+      placeBet({
+        sessionId: "session-dup",
+        userId: "user-dup",
+        requestId: "req-dup",
+        betId: "ai-dies-this-round",
+        amount: 50,
+        placedAt: "2026-03-10T12:02:12.000Z",
+      }),
+    ).rejects.toBeInstanceOf(BetRequestConflictError);
   });
 
   test("rejects bets above available balance", async () => {
@@ -173,6 +223,55 @@ describe("game betting lifecycle", () => {
         placedAt: "2026-03-10T12:10:11.000Z",
       }),
     ).rejects.toBeInstanceOf(ParticipantIneligibleToBetError);
+  });
+
+  test("treats the exact window close boundary as closed", async () => {
+    await createGameSession(createEnvelope({ sessionId: "session-close" }));
+
+    await joinGameSession({
+      sessionId: "session-close",
+      userId: "user-close",
+      joinedAt: "2026-03-10T12:12:00.000Z",
+      random: createRandomSequence([0.5, 0.5]),
+    });
+
+    await openBettingWindow({
+      sessionId: "session-close",
+      openedAt: "2026-03-10T12:12:10.000Z",
+      playerHp: 4,
+      aiHp: 4,
+      magazine: {
+        liveRounds: 2,
+        blankRounds: 3,
+      },
+    });
+
+    await expect(
+      placeBet({
+        sessionId: "session-close",
+        userId: "user-close",
+        requestId: "req-close",
+        betId: "player-survives-round",
+        amount: MINIMUM_BET_AMOUNT,
+        placedAt: "2026-03-10T12:12:20.000Z",
+      }),
+    ).rejects.toThrow("Betting is closed for round 1");
+  });
+
+  test("surfaces session creation failures instead of misreporting missing session", async () => {
+    const failingApi = createBettingApi({
+      getGameSession: async () => null,
+      createGameSession: async () => {
+        throw new Error("upstash write failed");
+      },
+      updateGameSession: async () => {
+        throw new Error("unreachable");
+      },
+    });
+
+    await expect(failingApi.ensureGameSession("session-fail")).rejects.toThrow(
+      "upstash write failed",
+    );
   });
 
   test("settles active bets, unlocks funds, and applies only net winnings to wallet balance", async () => {

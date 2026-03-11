@@ -65,6 +65,18 @@ export class BetQuoteNotFoundError extends Schema.TaggedError<BetQuoteNotFoundEr
   },
 ) {}
 
+export class BetRequestConflictError extends Schema.TaggedError<BetRequestConflictError>()(
+  "BetRequestConflict",
+  {
+    requestId: Schema.String,
+    existingBetId: Schema.String,
+    requestedBetId: Schema.String,
+    existingAmount: Schema.Number,
+    requestedAmount: Schema.Number,
+    message: Schema.String,
+  },
+) {}
+
 export class GameRuntimeError extends Schema.TaggedError<GameRuntimeError>()(
   "GameRuntimeError",
   {
