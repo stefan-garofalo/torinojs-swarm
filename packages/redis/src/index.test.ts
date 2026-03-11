@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test } from "bun:test";
+import { Effect } from "effect";
 
 import {
   createGameSession,
+  GameSessionStore,
   getGameSession,
   resetGameSessionsForTests,
   updateGameSession,
@@ -68,5 +70,16 @@ describe("@reaping/redis", () => {
         }),
       }),
     ).rejects.toThrow("version mismatch");
+  });
+
+  test("service-backed reads observe the reset test storage", async () => {
+    const store = await Effect.runPromise(GameSessionStore.pipe(Effect.provide(GameSessionStore.Default)));
+
+    await createGameSession(baseEnvelope());
+    expect(await Effect.runPromise(store.getGameSession("session-1"))).not.toBeNull();
+
+    await resetGameSessionsForTests();
+
+    expect(await Effect.runPromise(store.getGameSession("session-1"))).toBeNull();
   });
 });

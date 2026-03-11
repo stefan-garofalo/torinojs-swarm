@@ -78,14 +78,11 @@ let runtimeStoragePromise: Promise<SessionStorage> | null = null;
 export class GameSessionStore extends Effect.Service<GameSessionStore>()("GameSessionStore", {
   accessors: true,
   effect: Effect.gen(function* () {
-    const storage = yield* Effect.tryPromise({
-      try: getStorage,
-      catch: toSessionStoreError,
-    });
-
     const getGameSessionEffect = Effect.fn("GameSessionStore.getGameSession")(function* (
       sessionId: string,
     ) {
+      const storage = yield* getStorageEffect();
+
       return yield* Effect.tryPromise({
         try: () => storage.get(sessionId),
         catch: toSessionStoreError,
@@ -95,6 +92,8 @@ export class GameSessionStore extends Effect.Service<GameSessionStore>()("GameSe
     const createGameSessionEffect = Effect.fn("GameSessionStore.createGameSession")(function* (
       envelope: GameSessionEnvelope,
     ) {
+      const storage = yield* getStorageEffect();
+
       validateEnvelope(envelope, envelope.sessionId);
 
       return yield* Effect.tryPromise({
@@ -106,6 +105,7 @@ export class GameSessionStore extends Effect.Service<GameSessionStore>()("GameSe
     const updateGameSessionEffect = Effect.fn("GameSessionStore.updateGameSession")(function* (
       input: UpdateGameSessionInput,
     ) {
+      const storage = yield* getStorageEffect();
       const current = yield* Effect.tryPromise({
         try: () => storage.get(input.sessionId),
         catch: toSessionStoreError,
@@ -470,4 +470,11 @@ function isOptionalTurn(value: JsonValue | undefined): value is GameSessionTurn 
 
 function toSessionStoreError(error: unknown): Error {
   return error instanceof Error ? error : new Error("game session store failure");
+}
+
+function getStorageEffect(): Effect.Effect<SessionStorage, Error> {
+  return Effect.tryPromise({
+    try: getStorage,
+    catch: toSessionStoreError,
+  });
 }
