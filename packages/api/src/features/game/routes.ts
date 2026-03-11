@@ -1,22 +1,20 @@
+import { Effect } from "effect";
 import { Elysia, status, t } from "elysia";
 
 import { resolveAuthUserFromRequest } from "../../modules/http/auth-plugin.js";
-import {
-  DEFAULT_GAME_SESSION_ID,
-  ensureGameSession,
-  getEconomySnapshot,
-  placeBet,
-} from "./betting.js";
+import { AppRuntime } from "../../runtime.js";
+import { DEFAULT_GAME_SESSION_ID } from "./betting.js";
 import {
   BetAmountTooLowError,
   BetQuoteNotFoundError,
   BettingWindowClosedError,
+  GameRuntimeError,
   GameSessionNotFoundError,
   InsufficientAvailableBalanceError,
   ParticipantIneligibleToBetError,
   ParticipantNotFoundError,
 } from "./errors.js";
-import { joinGameSession } from "./session-join.js";
+import { GameService } from "./service.js";
 
 const walletSchema = t.Object({
   userId: t.String(),
@@ -119,6 +117,11 @@ const betValidationSchema = t.Object({
   message: t.String(),
 });
 
+const runtimeErrorSchema = t.Object({
+  _tag: t.Literal("GameRuntimeError"),
+  message: t.String(),
+});
+
 export const gameRoutes = new Elysia({ prefix: "/api/game" })
   .post(
     "/session/join",
@@ -132,21 +135,35 @@ export const gameRoutes = new Elysia({ prefix: "/api/game" })
         });
       }
 
-      await ensureGameSession(DEFAULT_GAME_SESSION_ID);
-      await joinGameSession({
-        sessionId: DEFAULT_GAME_SESSION_ID,
-        userId: authUser.id,
-      });
+      const result = await runGameEffect(
+        Effect.gen(function* () {
+          yield* GameService.ensureSession(DEFAULT_GAME_SESSION_ID);
+          yield* GameService.joinSession({
+            sessionId: DEFAULT_GAME_SESSION_ID,
+            userId: authUser.id,
+          });
 
-      return getEconomySnapshot({
-        sessionId: DEFAULT_GAME_SESSION_ID,
-        userId: authUser.id,
-      });
+          return yield* GameService.getEconomySnapshot({
+            sessionId: DEFAULT_GAME_SESSION_ID,
+            userId: authUser.id,
+          });
+        }),
+      );
+
+      if (result._tag === "Left") {
+        return mapGameError(result.left);
+      }
+
+      return result.right;
     },
     {
       response: {
         200: economySnapshotSchema,
+        400: betValidationSchema,
         401: unauthorizedSchema,
+        404: notFoundSchema,
+        409: betValidationSchema,
+        500: runtimeErrorSchema,
       },
     },
   )
@@ -162,12 +179,22 @@ export const gameRoutes = new Elysia({ prefix: "/api/game" })
         });
       }
 
-      await ensureGameSession(DEFAULT_GAME_SESSION_ID);
+      const result = await runGameEffect(
+        Effect.gen(function* () {
+          yield* GameService.ensureSession(DEFAULT_GAME_SESSION_ID);
 
-      const economy = await getEconomySnapshot({
-        sessionId: DEFAULT_GAME_SESSION_ID,
-        userId: authUser.id,
-      });
+          return yield* GameService.getEconomySnapshot({
+            sessionId: DEFAULT_GAME_SESSION_ID,
+            userId: authUser.id,
+          });
+        }),
+      );
+
+      if (result._tag === "Left") {
+        return mapGameError(result.left);
+      }
+
+      const economy = result.right;
 
       if (economy.participant === null) {
         return status(404, {
@@ -181,8 +208,11 @@ export const gameRoutes = new Elysia({ prefix: "/api/game" })
     {
       response: {
         200: economySnapshotSchema,
+        400: betValidationSchema,
         401: unauthorizedSchema,
         404: notFoundSchema,
+        409: betValidationSchema,
+        500: runtimeErrorSchema,
       },
     },
   )
@@ -198,19 +228,21 @@ export const gameRoutes = new Elysia({ prefix: "/api/game" })
         });
       }
 
-      try {
-        const result = await placeBet({
+      const result = await runGameEffect(
+        GameService.placeBet({
           sessionId: DEFAULT_GAME_SESSION_ID,
           userId: authUser.id,
           requestId: body.requestId,
           betId: body.betId,
           amount: body.amount,
-        });
+        }),
+      );
 
-        return result.economy;
-      } catch (error) {
-        return mapBetError(error);
+      if (result._tag === "Left") {
+        return mapGameError(result.left);
       }
+
+      return result.right.economy;
     },
     {
       body: t.Object({
@@ -224,11 +256,22 @@ export const gameRoutes = new Elysia({ prefix: "/api/game" })
         401: unauthorizedSchema,
         404: notFoundSchema,
         409: betValidationSchema,
+        500: runtimeErrorSchema,
       },
     },
   );
 
-function mapBetError(error: unknown) {
+function mapGameError(
+  error:
+    | BetAmountTooLowError
+    | BettingWindowClosedError
+    | BetQuoteNotFoundError
+    | GameRuntimeError
+    | GameSessionNotFoundError
+    | InsufficientAvailableBalanceError
+    | ParticipantIneligibleToBetError
+    | ParticipantNotFoundError,
+) {
   if (
     error instanceof BetAmountTooLowError ||
     error instanceof BetQuoteNotFoundError
@@ -257,5 +300,23 @@ function mapBetError(error: unknown) {
     });
   }
 
+  if (error instanceof GameRuntimeError) {
+    return status(500, {
+      _tag: error._tag,
+      message: error.message,
+    });
+  }
+
   throw error;
+}
+
+function runGameEffect<A, E>(
+  effect: Effect.Effect<A, E, GameService>,
+) {
+  return Effect.runPromise(
+    effect.pipe(
+      Effect.either,
+      Effect.provide(AppRuntime),
+    ),
+  );
 }

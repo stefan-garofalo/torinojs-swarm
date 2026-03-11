@@ -167,7 +167,9 @@
       "name": "@reaping/redis",
       "version": "0.0.0",
       "dependencies": {
+        "@reaping/env": "workspace:*",
         "@upstash/redis": "^1.36.4",
+        "effect": "catalog:",
       },
       "devDependencies": {
         "@reaping/config": "workspace:*",

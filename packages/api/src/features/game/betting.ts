@@ -1,4 +1,5 @@
 import {
+  type GameSessionStoreClient,
   createGameSession,
   getGameSession,
   updateGameSession,
@@ -35,6 +36,11 @@ const BETTING_WINDOW_DURATION_SECONDS = 10;
 const MAX_SESSION_UPDATE_RETRIES = 5;
 export const DEFAULT_GAME_SESSION_ID = "main";
 export const MINIMUM_BET_AMOUNT = 10;
+const defaultGameSessionStore: BettingStore = {
+  createGameSession,
+  getGameSession,
+  updateGameSession,
+};
 
 export type BettingWindowState = JsonObject & {
   round: number;
@@ -124,295 +130,329 @@ export type SettleRoundBetsResult = {
 export async function ensureGameSession(
   sessionId = DEFAULT_GAME_SESSION_ID,
 ): Promise<GameSessionEnvelope> {
-  const existing = await getGameSession(sessionId);
-
-  if (existing !== null) {
-    return existing;
-  }
-
-  try {
-    return await createGameSession(createEmptyGameSession(sessionId));
-  } catch {
-    const raced = await getGameSession(sessionId);
-
-    if (raced !== null) {
-      return raced;
-    }
-
-    throw new GameSessionNotFoundError({
-      sessionId,
-      message: `No game session found for "${sessionId}"`,
-    });
-  }
+  return createBettingApi(defaultGameSessionStore).ensureGameSession(sessionId);
 }
 
 export async function openBettingWindow(
   input: OpenBettingWindowInput,
 ): Promise<BettingWindowState> {
-  const openedAt = input.openedAt ?? new Date().toISOString();
-  const durationSeconds = input.durationSeconds ?? BETTING_WINDOW_DURATION_SECONDS;
-
-  const envelope = await updateEnvelopeWithRetries(input.sessionId, (current) => {
-    const quoteSnapshot = createBetQuoteSnapshot({
-      sessionId: current.sessionId,
-      sessionVersion: current.version,
-      round: current.round,
-      phase: "betting",
-      playerHp: input.playerHp,
-      aiHp: input.aiHp,
-      magazine: input.magazine,
-    });
-    const bettingWindow = createBettingWindowState({
-      round: current.round,
-      openedAt,
-      durationSeconds,
-      quoteSnapshot,
-    });
-
-    return {
-      ...current,
-      status: "in-progress",
-      phase: "betting",
-      bettingWindow,
-      version: current.version + 1,
-      economyEvents: [
-        ...current.economyEvents,
-        createEconomyEvent({
-          createdAt: openedAt,
-          round: current.round,
-          type: "betting-window-opened",
-          userId: null,
-          payload: {
-            quoteSnapshotId: bettingWindow.quoteSnapshotId,
-            closesAt: bettingWindow.closesAt,
-          },
-        }),
-      ],
-    };
-  });
-
-  return getRequiredBettingWindow(envelope);
+  return createBettingApi(defaultGameSessionStore).openBettingWindow(input);
 }
 
 export async function placeBet(input: PlaceBetInput): Promise<PlaceBetResult> {
-  const placedAt = input.placedAt ?? new Date().toISOString();
-  let persistedBet: PlacedBet | null = null;
-
-  const envelope = await updateEnvelopeWithRetries(input.sessionId, (current) => {
-    const participant = getRequiredParticipant(current, input.userId);
-    const existingPlacedBet = findPlacedBetByRequestId(current.activeBets, input.userId, input.requestId);
-
-    if (existingPlacedBet !== null) {
-      persistedBet = existingPlacedBet;
-      return current;
-    }
-
-    const bettingWindow = getRequiredOpenBettingWindow(current, placedAt);
-    assertParticipantEligibility(participant, current, input.userId);
-    assertBetAmount(participant, input.userId, input.amount);
-
-    const quote = findQuote(bettingWindow, input.betId);
-
-    if (quote === null) {
-      throw new BetQuoteNotFoundError({
-        betId: input.betId,
-        round: current.round,
-        message: `No active quote found for bet "${input.betId}"`,
-      });
-    }
-
-    const placedBet = createPlacedBet({
-      amount: input.amount,
-      placedAt,
-      quote,
-      requestId: input.requestId,
-      round: current.round,
-      userId: input.userId,
-    });
-    const nextParticipant = {
-      ...participant,
-      lockedFunds: participant.lockedFunds + input.amount,
-    };
-
-    persistedBet = placedBet;
-
-    return {
-      ...upsertParticipantWalletState(current, nextParticipant),
-      activeBets: [...current.activeBets, placedBet],
-      economyEvents: [
-        ...current.economyEvents,
-        createEconomyEvent({
-          createdAt: placedAt,
-          round: current.round,
-          type: "bet-placed",
-          userId: input.userId,
-          payload: {
-            requestId: input.requestId,
-            betId: input.betId,
-            amount: input.amount,
-            quoteSnapshotId: quote.id,
-          },
-        }),
-      ],
-      version: current.version + 1,
-    };
-  });
-
-  if (persistedBet === null) {
-    throw new Error("placed bet was not persisted");
-  }
-
-  return {
-    placedBet: persistedBet,
-    economy: buildEconomySnapshot(envelope, input.userId),
-  };
+  return createBettingApi(defaultGameSessionStore).placeBet(input);
 }
 
 export async function settleRoundBets(
   input: SettleRoundBetsInput,
 ): Promise<SettleRoundBetsResult> {
-  const settledAt = input.settledAt ?? new Date().toISOString();
-  let summary: SettlementSummary = {
-    settledBetCount: 0,
-    winningBetCount: 0,
-    losingBetCount: 0,
-  };
-
-  const current = await getRequiredSession(input.sessionId);
-
-  if (current.activeBets.length === 0) {
-    return {
-      economy: buildEconomySnapshot(current, null),
-      summary,
-    };
-  }
-
-  const envelope = await updateEnvelopeWithRetries(input.sessionId, (session) => {
-    const activeBets = parsePlacedBets(session.activeBets);
-
-    if (activeBets.length === 0) {
-      return session;
-    }
-
-    const participantMap = new Map<string, ParticipantWalletState>();
-
-    for (const participantValue of session.participants) {
-      const participant = getParticipantWalletState(
-        {
-          ...session,
-          participants: [participantValue],
-        },
-        String(participantValue.userId ?? ""),
-      );
-
-      if (participant !== null) {
-        participantMap.set(participant.userId, participant);
-      }
-    }
-
-    const nextEvents = [...session.economyEvents];
-
-    for (const placedBet of activeBets) {
-      const participant = participantMap.get(placedBet.userId);
-
-      if (participant === undefined) {
-        continue;
-      }
-
-      participant.lockedFunds -= placedBet.amount;
-
-      if (resolveBetQuote(getQuoteForSettlement(placedBet), input.outcome)) {
-        participant.walletBalance += roundToTwoDecimals(
-          placedBet.amount * (placedBet.payoutMultiplier - 1),
-        );
-        summary.winningBetCount += 1;
-        nextEvents.push(
-          createEconomyEvent({
-            createdAt: settledAt,
-            round: placedBet.round,
-            type: "bet-won",
-            userId: placedBet.userId,
-            payload: {
-              requestId: placedBet.requestId,
-              betId: placedBet.betId,
-              amount: placedBet.amount,
-              payoutMultiplier: placedBet.payoutMultiplier,
-            },
-          }),
-        );
-      } else {
-        participant.walletBalance -= placedBet.amount;
-        summary.losingBetCount += 1;
-        nextEvents.push(
-          createEconomyEvent({
-            createdAt: settledAt,
-            round: placedBet.round,
-            type: "bet-lost",
-            userId: placedBet.userId,
-            payload: {
-              requestId: placedBet.requestId,
-              betId: placedBet.betId,
-              amount: placedBet.amount,
-            },
-          }),
-        );
-      }
-
-      participantMap.set(placedBet.userId, participant);
-    }
-
-    summary.settledBetCount = activeBets.length;
-
-    const nextParticipants = session.participants.map((participantValue) => {
-      const userId = typeof participantValue.userId === "string" ? participantValue.userId : null;
-
-      if (userId === null) {
-        return participantValue;
-      }
-
-      const participant = participantMap.get(userId);
-
-      return participant === undefined ? participantValue : participant;
-    });
-
-    nextEvents.push(
-      createEconomyEvent({
-        createdAt: settledAt,
-        round: session.round,
-        type: "round-settled",
-        userId: null,
-        payload: {
-          settledBetCount: summary.settledBetCount,
-          winningBetCount: summary.winningBetCount,
-          losingBetCount: summary.losingBetCount,
-        },
-      }),
-    );
-
-    return {
-      ...session,
-      participants: nextParticipants,
-      activeBets: [],
-      bettingWindow: null,
-      phase: session.status === "ended" ? "ended" : "resolution",
-      economyEvents: nextEvents,
-      version: session.version + 1,
-    };
-  });
-
-  return {
-    economy: buildEconomySnapshot(envelope, null),
-    summary,
-  };
+  return createBettingApi(defaultGameSessionStore).settleRoundBets(input);
 }
 
 export async function getEconomySnapshot(input: {
   sessionId: string;
   userId: string | null;
 }): Promise<EconomySnapshot> {
-  const envelope = await getRequiredSession(input.sessionId);
+  return createBettingApi(defaultGameSessionStore).getEconomySnapshot(input);
+}
 
-  return buildEconomySnapshot(envelope, input.userId);
+type BettingStore = Pick<
+  GameSessionStoreClient,
+  "createGameSession" | "getGameSession" | "updateGameSession"
+>;
+
+export function createBettingApi(store: BettingStore) {
+  return {
+    ensureGameSession: async (
+      sessionId = DEFAULT_GAME_SESSION_ID,
+    ): Promise<GameSessionEnvelope> => {
+      const existing = await store.getGameSession(sessionId);
+
+      if (existing !== null) {
+        return existing;
+      }
+
+      try {
+        return await store.createGameSession(createEmptyGameSession(sessionId));
+      } catch {
+        const raced = await store.getGameSession(sessionId);
+
+        if (raced !== null) {
+          return raced;
+        }
+
+        throw new GameSessionNotFoundError({
+          sessionId,
+          message: `No game session found for "${sessionId}"`,
+        });
+      }
+    },
+    openBettingWindow: async (input: OpenBettingWindowInput): Promise<BettingWindowState> => {
+      const openedAt = input.openedAt ?? new Date().toISOString();
+      const durationSeconds = input.durationSeconds ?? BETTING_WINDOW_DURATION_SECONDS;
+
+      const envelope = await updateEnvelopeWithRetries(store, input.sessionId, (current) => {
+        const quoteSnapshot = createBetQuoteSnapshot({
+          sessionId: current.sessionId,
+          sessionVersion: current.version,
+          round: current.round,
+          phase: "betting",
+          playerHp: input.playerHp,
+          aiHp: input.aiHp,
+          magazine: input.magazine,
+        });
+        const bettingWindow = createBettingWindowState({
+          round: current.round,
+          openedAt,
+          durationSeconds,
+          quoteSnapshot,
+        });
+
+        return {
+          ...current,
+          status: "in-progress",
+          phase: "betting",
+          bettingWindow,
+          version: current.version + 1,
+          economyEvents: [
+            ...current.economyEvents,
+            createEconomyEvent({
+              createdAt: openedAt,
+              round: current.round,
+              type: "betting-window-opened",
+              userId: null,
+              payload: {
+                quoteSnapshotId: bettingWindow.quoteSnapshotId,
+                closesAt: bettingWindow.closesAt,
+              },
+            }),
+          ],
+        };
+      });
+
+      return getRequiredBettingWindow(envelope);
+    },
+    placeBet: async (input: PlaceBetInput): Promise<PlaceBetResult> => {
+      const placedAt = input.placedAt ?? new Date().toISOString();
+      let persistedBet: PlacedBet | null = null;
+
+      const envelope = await updateEnvelopeWithRetries(store, input.sessionId, (current) => {
+        const participant = getRequiredParticipant(current, input.userId);
+        const existingPlacedBet = findPlacedBetByRequestId(
+          current.activeBets,
+          input.userId,
+          input.requestId,
+        );
+
+        if (existingPlacedBet !== null) {
+          persistedBet = existingPlacedBet;
+          return current;
+        }
+
+        const bettingWindow = getRequiredOpenBettingWindow(current, placedAt);
+        assertParticipantEligibility(participant, current, input.userId);
+        assertBetAmount(participant, input.userId, input.amount);
+
+        const quote = findQuote(bettingWindow, input.betId);
+
+        if (quote === null) {
+          throw new BetQuoteNotFoundError({
+            betId: input.betId,
+            round: current.round,
+            message: `No active quote found for bet "${input.betId}"`,
+          });
+        }
+
+        const placedBet = createPlacedBet({
+          amount: input.amount,
+          placedAt,
+          quote,
+          requestId: input.requestId,
+          round: current.round,
+          userId: input.userId,
+        });
+        const nextParticipant = {
+          ...participant,
+          lockedFunds: participant.lockedFunds + input.amount,
+        };
+
+        persistedBet = placedBet;
+
+        return {
+          ...upsertParticipantWalletState(current, nextParticipant),
+          activeBets: [...current.activeBets, placedBet],
+          economyEvents: [
+            ...current.economyEvents,
+            createEconomyEvent({
+              createdAt: placedAt,
+              round: current.round,
+              type: "bet-placed",
+              userId: input.userId,
+              payload: {
+                requestId: input.requestId,
+                betId: input.betId,
+                amount: input.amount,
+                quoteSnapshotId: quote.id,
+              },
+            }),
+          ],
+          version: current.version + 1,
+        };
+      });
+
+      if (persistedBet === null) {
+        throw new Error("placed bet was not persisted");
+      }
+
+      return {
+        placedBet: persistedBet,
+        economy: buildEconomySnapshot(envelope, input.userId),
+      };
+    },
+    settleRoundBets: async (input: SettleRoundBetsInput): Promise<SettleRoundBetsResult> => {
+      const settledAt = input.settledAt ?? new Date().toISOString();
+      let summary: SettlementSummary = {
+        settledBetCount: 0,
+        winningBetCount: 0,
+        losingBetCount: 0,
+      };
+
+      const current = await getRequiredSession(store, input.sessionId);
+
+      if (current.activeBets.length === 0) {
+        return {
+          economy: buildEconomySnapshot(current, null),
+          summary,
+        };
+      }
+
+      const envelope = await updateEnvelopeWithRetries(store, input.sessionId, (session) => {
+        const activeBets = parsePlacedBets(session.activeBets);
+
+        if (activeBets.length === 0) {
+          return session;
+        }
+
+        const participantMap = new Map<string, ParticipantWalletState>();
+
+        for (const participantValue of session.participants) {
+          const participant = getParticipantWalletState(
+            {
+              ...session,
+              participants: [participantValue],
+            },
+            String(participantValue.userId ?? ""),
+          );
+
+          if (participant !== null) {
+            participantMap.set(participant.userId, participant);
+          }
+        }
+
+        const nextEvents = [...session.economyEvents];
+
+        for (const placedBet of activeBets) {
+          const participant = participantMap.get(placedBet.userId);
+
+          if (participant === undefined) {
+            continue;
+          }
+
+          participant.lockedFunds -= placedBet.amount;
+
+          if (resolveBetQuote(getQuoteForSettlement(placedBet), input.outcome)) {
+            participant.walletBalance += roundToTwoDecimals(
+              placedBet.amount * (placedBet.payoutMultiplier - 1),
+            );
+            summary.winningBetCount += 1;
+            nextEvents.push(
+              createEconomyEvent({
+                createdAt: settledAt,
+                round: placedBet.round,
+                type: "bet-won",
+                userId: placedBet.userId,
+                payload: {
+                  requestId: placedBet.requestId,
+                  betId: placedBet.betId,
+                  amount: placedBet.amount,
+                  payoutMultiplier: placedBet.payoutMultiplier,
+                },
+              }),
+            );
+          } else {
+            participant.walletBalance -= placedBet.amount;
+            summary.losingBetCount += 1;
+            nextEvents.push(
+              createEconomyEvent({
+                createdAt: settledAt,
+                round: placedBet.round,
+                type: "bet-lost",
+                userId: placedBet.userId,
+                payload: {
+                  requestId: placedBet.requestId,
+                  betId: placedBet.betId,
+                  amount: placedBet.amount,
+                },
+              }),
+            );
+          }
+
+          participantMap.set(placedBet.userId, participant);
+        }
+
+        summary.settledBetCount = activeBets.length;
+
+        const nextParticipants = session.participants.map((participantValue) => {
+          const userId = typeof participantValue.userId === "string" ? participantValue.userId : null;
+
+          if (userId === null) {
+            return participantValue;
+          }
+
+          const participant = participantMap.get(userId);
+
+          return participant === undefined ? participantValue : participant;
+        });
+
+        nextEvents.push(
+          createEconomyEvent({
+            createdAt: settledAt,
+            round: session.round,
+            type: "round-settled",
+            userId: null,
+            payload: {
+              settledBetCount: summary.settledBetCount,
+              winningBetCount: summary.winningBetCount,
+              losingBetCount: summary.losingBetCount,
+            },
+          }),
+        );
+
+        return {
+          ...session,
+          participants: nextParticipants,
+          activeBets: [],
+          bettingWindow: null,
+          phase: session.status === "ended" ? "ended" : "resolution",
+          economyEvents: nextEvents,
+          version: session.version + 1,
+        };
+      });
+
+      return {
+        economy: buildEconomySnapshot(envelope, null),
+        summary,
+      };
+    },
+    getEconomySnapshot: async (input: {
+      sessionId: string;
+      userId: string | null;
+    }): Promise<EconomySnapshot> => {
+      const envelope = await getRequiredSession(store, input.sessionId);
+
+      return buildEconomySnapshot(envelope, input.userId);
+    },
+  };
 }
 
 function buildEconomySnapshot(
@@ -457,11 +497,12 @@ function createEmptyGameSession(sessionId: string): GameSessionEnvelope {
 }
 
 async function updateEnvelopeWithRetries(
+  store: BettingStore,
   sessionId: string,
   transform: (current: GameSessionEnvelope) => GameSessionEnvelope,
 ): Promise<GameSessionEnvelope> {
   for (let attempt = 0; attempt < MAX_SESSION_UPDATE_RETRIES; attempt += 1) {
-    const current = await getRequiredSession(sessionId);
+    const current = await getRequiredSession(store, sessionId);
 
     try {
       const next = transform(current);
@@ -470,7 +511,7 @@ async function updateEnvelopeWithRetries(
         return current;
       }
 
-      return await updateGameSession({
+      return await store.updateGameSession({
         sessionId,
         expectedVersion: current.version,
         update: () => next,
@@ -487,8 +528,8 @@ async function updateEnvelopeWithRetries(
   throw new Error(`failed to update game session "${sessionId}" after retrying version conflicts`);
 }
 
-async function getRequiredSession(sessionId: string): Promise<GameSessionEnvelope> {
-  const envelope = await getGameSession(sessionId);
+async function getRequiredSession(store: BettingStore, sessionId: string): Promise<GameSessionEnvelope> {
+  const envelope = await store.getGameSession(sessionId);
 
   if (envelope === null) {
     throw new GameSessionNotFoundError({

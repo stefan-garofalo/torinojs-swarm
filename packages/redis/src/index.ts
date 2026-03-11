@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import { importUpstashRedisModule } from "./upstash-loader.js";
 
 export type JsonPrimitive = boolean | number | string | null;
@@ -33,6 +35,13 @@ type UpdateGameSessionInput = {
   update: (current: GameSessionEnvelope) => GameSessionEnvelope;
 };
 
+export type GameSessionStoreClient = {
+  getGameSession(sessionId: string): Promise<GameSessionEnvelope | null>;
+  createGameSession(envelope: GameSessionEnvelope): Promise<GameSessionEnvelope>;
+  updateGameSession(input: UpdateGameSessionInput): Promise<GameSessionEnvelope>;
+  resetGameSessionsForTests(): Promise<void>;
+};
+
 type SessionStorage = {
   get(sessionId: string): Promise<GameSessionEnvelope | null>;
   create(envelope: GameSessionEnvelope): Promise<GameSessionEnvelope>;
@@ -66,53 +75,119 @@ const VERSION_MISMATCH_SENTINEL = "__VERSION_MISMATCH__";
 let testStorage: SessionStorage | null = null;
 let runtimeStoragePromise: Promise<SessionStorage> | null = null;
 
+export class GameSessionStore extends Effect.Service<GameSessionStore>()("GameSessionStore", {
+  accessors: true,
+  effect: Effect.gen(function* () {
+    const storage = yield* Effect.tryPromise({
+      try: getStorage,
+      catch: toSessionStoreError,
+    });
+
+    const getGameSessionEffect = Effect.fn("GameSessionStore.getGameSession")(function* (
+      sessionId: string,
+    ) {
+      return yield* Effect.tryPromise({
+        try: () => storage.get(sessionId),
+        catch: toSessionStoreError,
+      });
+    });
+
+    const createGameSessionEffect = Effect.fn("GameSessionStore.createGameSession")(function* (
+      envelope: GameSessionEnvelope,
+    ) {
+      validateEnvelope(envelope, envelope.sessionId);
+
+      return yield* Effect.tryPromise({
+        try: () => storage.create(normalizeEnvelope(envelope)),
+        catch: toSessionStoreError,
+      });
+    });
+
+    const updateGameSessionEffect = Effect.fn("GameSessionStore.updateGameSession")(function* (
+      input: UpdateGameSessionInput,
+    ) {
+      const current = yield* Effect.tryPromise({
+        try: () => storage.get(input.sessionId),
+        catch: toSessionStoreError,
+      });
+
+      if (current === null) {
+        return yield* Effect.fail(new Error(SESSION_NOT_FOUND_MESSAGE));
+      }
+
+      if (current.version !== input.expectedVersion) {
+        return yield* Effect.fail(new Error(VERSION_MISMATCH_MESSAGE));
+      }
+
+      const next = normalizeEnvelope(input.update(current));
+
+      validateEnvelope(next, input.sessionId);
+
+      if (next.version <= current.version) {
+        return yield* Effect.fail(new Error("updated session version must increase"));
+      }
+
+      return yield* Effect.tryPromise({
+        try: () =>
+          storage.compareAndSwap({
+            sessionId: input.sessionId,
+            expectedVersion: input.expectedVersion,
+            next,
+          }),
+        catch: toSessionStoreError,
+      });
+    });
+
+    const resetGameSessionsForTestsEffect = Effect.fn(
+      "GameSessionStore.resetGameSessionsForTests",
+    )(function* () {
+      if (testStorage === null) {
+        testStorage = createMemoryStorage();
+      }
+
+      const storage = testStorage;
+
+      yield* Effect.tryPromise({
+        try: () => storage.reset(),
+        catch: toSessionStoreError,
+      });
+    });
+
+    return {
+      getGameSession: getGameSessionEffect,
+      createGameSession: createGameSessionEffect,
+      updateGameSession: updateGameSessionEffect,
+      resetGameSessionsForTests: resetGameSessionsForTestsEffect,
+    };
+  }),
+}) {}
+
 export async function getGameSession(sessionId: string): Promise<GameSessionEnvelope | null> {
-  return (await getStorage()).get(sessionId);
+  return Effect.runPromise(
+    GameSessionStore.getGameSession(sessionId).pipe(Effect.provide(GameSessionStore.Default)),
+  );
 }
 
 export async function createGameSession(
   envelope: GameSessionEnvelope,
 ): Promise<GameSessionEnvelope> {
-  validateEnvelope(envelope, envelope.sessionId);
-
-  return (await getStorage()).create(normalizeEnvelope(envelope));
+  return Effect.runPromise(
+    GameSessionStore.createGameSession(envelope).pipe(Effect.provide(GameSessionStore.Default)),
+  );
 }
 
 export async function updateGameSession(
   input: UpdateGameSessionInput,
 ): Promise<GameSessionEnvelope> {
-  const storage = await getStorage();
-  const current = await storage.get(input.sessionId);
-
-  if (current === null) {
-    throw new Error(SESSION_NOT_FOUND_MESSAGE);
-  }
-
-  if (current.version !== input.expectedVersion) {
-    throw new Error(VERSION_MISMATCH_MESSAGE);
-  }
-
-  const next = normalizeEnvelope(input.update(current));
-
-  validateEnvelope(next, input.sessionId);
-
-  if (next.version <= current.version) {
-    throw new Error("updated session version must increase");
-  }
-
-  return storage.compareAndSwap({
-    sessionId: input.sessionId,
-    expectedVersion: input.expectedVersion,
-    next,
-  });
+  return Effect.runPromise(
+    GameSessionStore.updateGameSession(input).pipe(Effect.provide(GameSessionStore.Default)),
+  );
 }
 
 export async function resetGameSessionsForTests(): Promise<void> {
-  if (testStorage === null) {
-    testStorage = createMemoryStorage();
-  }
-
-  await testStorage.reset();
+  await Effect.runPromise(
+    GameSessionStore.resetGameSessionsForTests().pipe(Effect.provide(GameSessionStore.Default)),
+  );
 }
 
 async function getStorage(): Promise<SessionStorage> {
@@ -391,4 +466,8 @@ function isStatus(value: JsonValue | undefined): value is GameSessionStatus {
 
 function isOptionalTurn(value: JsonValue | undefined): value is GameSessionTurn | null | undefined {
   return value === undefined || value === null || value === "player" || value === "ai";
+}
+
+function toSessionStoreError(error: unknown): Error {
+  return error instanceof Error ? error : new Error("game session store failure");
 }

@@ -64,3 +64,10 @@ export class BetQuoteNotFoundError extends Schema.TaggedError<BetQuoteNotFoundEr
     message: Schema.String,
   },
 ) {}
+
+export class GameRuntimeError extends Schema.TaggedError<GameRuntimeError>()(
+  "GameRuntimeError",
+  {
+    message: Schema.String,
+  },
+) {}

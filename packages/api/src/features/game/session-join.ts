@@ -1,4 +1,5 @@
 import {
+  type GameSessionStoreClient,
   getGameSession,
   updateGameSession,
 } from "@reaping/redis";
@@ -12,6 +13,10 @@ import {
 } from "./wallet.js";
 
 const MAX_JOIN_RETRIES = 3;
+const defaultGameSessionStore: SessionJoinStore = {
+  getGameSession,
+  updateGameSession,
+};
 
 export type JoinGameSessionInput = {
   sessionId: string;
@@ -21,66 +26,82 @@ export type JoinGameSessionInput = {
 };
 
 export async function joinGameSession(input: JoinGameSessionInput): Promise<ParticipantWalletState> {
-  for (let attempt = 0; attempt < MAX_JOIN_RETRIES; attempt += 1) {
-    const envelope = await getRequiredSession(input.sessionId);
-    const existingWallet = getParticipantWalletState(envelope, input.userId);
-
-    if (existingWallet !== null) {
-      return existingWallet;
-    }
-
-    const joinedAt = input.joinedAt ?? new Date().toISOString();
-    const nextWalletState = buildParticipantWalletState({
-      currentRound: envelope.round,
-      joinedAt,
-      sessionStatus: envelope.status,
-      userId: input.userId,
-      random: input.random,
-    });
-
-    try {
-      const updated = await updateGameSession({
-        sessionId: input.sessionId,
-        expectedVersion: envelope.version,
-        update: (current) => ({
-          ...upsertParticipantWalletState(current, nextWalletState),
-          version: current.version + 1,
-        }),
-      });
-      const persistedWallet = getParticipantWalletState(updated, input.userId);
-
-      if (persistedWallet === null) {
-        throw new Error("joined participant wallet was not persisted");
-      }
-
-      return persistedWallet;
-    } catch (error) {
-      if (isVersionMismatch(error)) {
-        continue;
-      }
-
-      throw error;
-    }
-  }
-
-  throw new Error("failed to join game session after retrying version conflicts");
+  return createSessionJoinApi(defaultGameSessionStore).joinGameSession(input);
 }
 
 export async function getParticipantWallet(input: {
   sessionId: string;
   userId: string;
 }): Promise<ParticipantWalletState | null> {
-  const envelope = await getGameSession(input.sessionId);
-
-  if (envelope === null) {
-    return null;
-  }
-
-  return getParticipantWalletState(envelope, input.userId);
+  return createSessionJoinApi(defaultGameSessionStore).getParticipantWallet(input);
 }
 
-async function getRequiredSession(sessionId: string) {
-  const envelope = await getGameSession(sessionId);
+type SessionJoinStore = Pick<GameSessionStoreClient, "getGameSession" | "updateGameSession">;
+
+export function createSessionJoinApi(store: SessionJoinStore) {
+  return {
+    joinGameSession: async (input: JoinGameSessionInput): Promise<ParticipantWalletState> => {
+      for (let attempt = 0; attempt < MAX_JOIN_RETRIES; attempt += 1) {
+        const envelope = await getRequiredSession(store, input.sessionId);
+        const existingWallet = getParticipantWalletState(envelope, input.userId);
+
+        if (existingWallet !== null) {
+          return existingWallet;
+        }
+
+        const joinedAt = input.joinedAt ?? new Date().toISOString();
+        const nextWalletState = buildParticipantWalletState({
+          currentRound: envelope.round,
+          joinedAt,
+          sessionStatus: envelope.status,
+          userId: input.userId,
+          random: input.random,
+        });
+
+        try {
+          const updated = await store.updateGameSession({
+            sessionId: input.sessionId,
+            expectedVersion: envelope.version,
+            update: (current) => ({
+              ...upsertParticipantWalletState(current, nextWalletState),
+              version: current.version + 1,
+            }),
+          });
+          const persistedWallet = getParticipantWalletState(updated, input.userId);
+
+          if (persistedWallet === null) {
+            throw new Error("joined participant wallet was not persisted");
+          }
+
+          return persistedWallet;
+        } catch (error) {
+          if (isVersionMismatch(error)) {
+            continue;
+          }
+
+          throw error;
+        }
+      }
+
+      throw new Error("failed to join game session after retrying version conflicts");
+    },
+    getParticipantWallet: async (input: {
+      sessionId: string;
+      userId: string;
+    }): Promise<ParticipantWalletState | null> => {
+      const envelope = await store.getGameSession(input.sessionId);
+
+      if (envelope === null) {
+        return null;
+      }
+
+      return getParticipantWalletState(envelope, input.userId);
+    },
+  };
+}
+
+async function getRequiredSession(store: SessionJoinStore, sessionId: string) {
+  const envelope = await store.getGameSession(sessionId);
 
   if (envelope === null) {
     throw new Error("game session not found");
