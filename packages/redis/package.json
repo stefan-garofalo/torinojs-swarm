@@ -1,5 +1,5 @@
 {
-  "name": "@reaping/api",
+  "name": "@reaping/redis",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,18 +11,15 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "check-types": "tsc -b"
+    "check-types": "tsc -b",
+    "test": "bun test src"
   },
   "dependencies": {
-    "@elysiajs/cors": "^1.4.1",
-    "@reaping/auth": "workspace:*",
-    "@reaping/db": "workspace:*",
-    "@reaping/redis": "workspace:*",
-    "effect": "catalog:",
-    "elysia": "catalog:"
+    "@upstash/redis": "^1.36.4"
   },
   "devDependencies": {
     "@reaping/config": "workspace:*",
+    "@types/bun": "catalog:",
     "typescript": "catalog:"
   }
 }

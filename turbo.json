@@ -9,6 +9,8 @@
       "env": [
         "DATABASE_URL",
         "DATABASE_URL_DIRECT",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN",
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",
         "CORS_ORIGIN",
@@ -31,7 +33,7 @@
       "outputs": []
     },
     "test": {
-      "dependsOn": ["^test"],
+      "dependsOn": ["^build", "^test"],
       "cache": false,
       "outputs": []
     },

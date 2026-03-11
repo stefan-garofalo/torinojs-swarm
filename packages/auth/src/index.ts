@@ -23,3 +23,12 @@ export const auth = betterAuth({
   },
   plugins: [],
 });
+
+export async function getAuthSessionFromHeaders(headers: Headers) {
+  return auth.api.getSession({
+    headers,
+  });
+}
+
+export type AuthSession = NonNullable<Awaited<ReturnType<typeof getAuthSessionFromHeaders>>>;
+export type AuthUser = AuthSession["user"];
