@@ -26,6 +26,8 @@
         "@reaping/env": "workspace:*",
         "better-auth": "catalog:",
         "dotenv": "catalog:",
+        "effect": "catalog:",
+        "elysia": "catalog:",
         "zod": "catalog:",
       },
       "devDependencies": {
