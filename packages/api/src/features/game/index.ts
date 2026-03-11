@@ -6,4 +6,5 @@ export * from "./errors.js";
 export * from "./pricing.js";
 export * from "./routes.js";
 export * from "./session-join.js";
+export * from "./service.js";
 export * from "./wallet.js";
