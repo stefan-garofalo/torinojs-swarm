@@ -1,10 +1,22 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test"
 import { treaty } from "@elysiajs/eden"
+import { config } from "dotenv"
+import { execFileSync } from "node:child_process"
+import { existsSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 
 import type { App, EconomySnapshot } from "@reaping/api"
 
+const localEnvPath = fileURLToPath(new URL("../.env", import.meta.url))
+const gitCommonDir = execFileSync("git", ["rev-parse", "--git-common-dir"], {
+  encoding: "utf8",
+}).trim()
+const sharedEnvPath = fileURLToPath(new URL("../apps/server/.env", `file://${gitCommonDir}/`))
+const envPath = existsSync(localEnvPath) ? localEnvPath : sharedEnvPath
+
+config({ path: envPath, override: false })
+
 const originalEnv = { ...process.env }
-const hasDatabaseEnv = Boolean(originalEnv.DATABASE_URL)
 
 const applyServerRuntimeEnv = () => {
   const runtimeEnv = process.env as Record<string, string | undefined>
@@ -14,10 +26,10 @@ const applyServerRuntimeEnv = () => {
   runtimeEnv.UPSTASH_REDIS_REST_URL ??= "https://example.upstash.io"
   runtimeEnv.UPSTASH_REDIS_REST_TOKEN ??= "test-upstash-token"
   runtimeEnv.BETTER_AUTH_SECRET ??= "12345678901234567890123456789012"
-  runtimeEnv.BETTER_AUTH_URL ??= "http://127.0.0.1:3001"
-  runtimeEnv.CORS_ORIGIN ??= "http://127.0.0.1:3000"
+  runtimeEnv.BETTER_AUTH_URL ??= "http://localhost:3000"
+  runtimeEnv.CORS_ORIGIN ??= "http://localhost:3001"
   runtimeEnv.BETTER_AUTH_TRUSTED_ORIGINS ??=
-    "http://127.0.0.1:3000,https://trusted-preview.example.com"
+    "http://localhost:3001,https://trusted-preview.example.com"
   runtimeEnv.GITHUB_CLIENT_ID ??= "github-client-id"
   runtimeEnv.GITHUB_CLIENT_SECRET ??= "github-client-secret"
   runtimeEnv.AI_PROVIDER ??= "gateway"
@@ -79,7 +91,7 @@ describe("app smoke", () => {
     })
   })
 
-  test.if(hasDatabaseEnv)("reports database health with the configured environment", async () => {
+  test("reports database health with the configured environment", async () => {
     const response = await api.api.demo.db.get()
 
     expect(response.error).toBeNull()
