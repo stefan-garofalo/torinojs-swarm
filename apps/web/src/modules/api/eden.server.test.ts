@@ -8,6 +8,8 @@ const applyServerRuntimeEnv = () => {
 
   runtimeEnv.DATABASE_URL = "postgresql://demo:demo@localhost:5432/reaping"
   runtimeEnv.DATABASE_URL_DIRECT = "postgresql://demo:demo@localhost:5432/reaping"
+  runtimeEnv.UPSTASH_REDIS_REST_URL = "https://example.upstash.io"
+  runtimeEnv.UPSTASH_REDIS_REST_TOKEN = "test-upstash-token"
   runtimeEnv.BETTER_AUTH_SECRET = "12345678901234567890123456789012"
   runtimeEnv.BETTER_AUTH_URL = "http://localhost:3000"
   runtimeEnv.CORS_ORIGIN = "http://localhost:3001"
@@ -27,6 +29,7 @@ afterEach(() => {
 describe("server Eden transport", () => {
   test("uses the in-process app instead of network fetch", async () => {
     applyServerRuntimeEnv()
+    mock.module("server-only", () => ({}))
 
     const networkFetch = mock(() => {
       throw new Error("network fetch should not be called")

@@ -1,4 +1,4 @@
-import { Effect } from "effect"
+import { Config, Effect } from "effect"
 import { pingDatabaseEffect, withDatabase } from "@reaping/db"
 
 import { DemoDatabaseUnavailableError, DemoItemNotFoundError } from "./errors.js"
@@ -13,19 +13,23 @@ export class DemoService extends Effect.Service<DemoService>()("DemoService", {
   accessors: true,
   effect: Effect.gen(function* () {
     const checkDatabase = Effect.fn("DemoService.checkDatabase")(function* () {
-      if (process.env.NODE_ENV === "test") {
+      const nodeEnv = yield* Config.string("NODE_ENV").pipe(
+        Config.withDefault("development"),
+        Effect.orDie,
+      )
+
+      if (nodeEnv === "test") {
         return { healthy: true }
       }
 
       yield* withDatabase(
         pingDatabaseEffect.pipe(
           Effect.map(() => "ok"),
-          Effect.catchAll((error) =>
-            Effect.fail(
+          Effect.mapError(
+            (error) =>
               new DemoDatabaseUnavailableError({
                 message: String(error),
               }),
-            ),
           ),
         ),
       )

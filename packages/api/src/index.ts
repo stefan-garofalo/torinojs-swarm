@@ -1,18 +1,19 @@
 import { Elysia } from "elysia"
 
-import { authPlugin } from "./modules/http/auth-plugin.js"
+import { createAuthPlugin } from "./modules/http/auth-plugin.js"
 import { httpTransportPlugin } from "./modules/http/transport-plugin.js"
 import { demoDomain } from "./features/demo/index.js"
 import { gameDomain } from "./features/game/index.js"
 
 export interface CreateAppOptions {
   corsOrigin: string
+  allowTestAuthHeaders?: boolean
 }
 
-export const createApp = ({ corsOrigin }: CreateAppOptions) =>
+export const createApp = ({ corsOrigin, allowTestAuthHeaders = false }: CreateAppOptions) =>
   new Elysia()
     .use(httpTransportPlugin(corsOrigin))
-    .use(authPlugin)
+    .use(createAuthPlugin({ allowTestAuthHeaders }))
     .use(demoDomain)
     .use(gameDomain)
     .get("/health", () => "OK")

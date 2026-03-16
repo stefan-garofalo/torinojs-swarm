@@ -11,11 +11,8 @@ if (import.meta.main) {
   const launch = Effect.gen(function* () {
     void aiModelSelection
     const port = yield* Config.integer("PORT").pipe(Config.withDefault(3000))
-    yield* Effect.sync(() =>
-      app.listen(port, () => {
-        console.log(`Server is running on http://localhost:${port}`)
-      }),
-    )
+    const server = yield* Effect.sync(() => app.listen(port))
+    yield* Effect.log(`Server is running on http://localhost:${server.server?.hostname ?? "localhost"}:${port}`)
   })
 
   await Effect.runPromise(launch)

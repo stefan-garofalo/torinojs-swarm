@@ -1,3 +1,4 @@
+import { Effect } from "effect"
 import { cors } from "@elysiajs/cors"
 import { Elysia, type Context, status } from "elysia"
 
@@ -27,7 +28,7 @@ export const httpTransportPlugin = (corsOrigin: string) =>
       }),
     )
     .onError(({ error, set }) => {
-      console.error(error)
+      void Effect.runFork(Effect.logError("Unhandled HTTP error", { error }))
       set.status = DEFAULT_HTTP_ERROR_STATUS
 
       return {

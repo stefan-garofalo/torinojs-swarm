@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import { Elysia, status, t } from "elysia";
 
+import { runAppEffect } from "../../modules/http/run-effect.js";
 import { resolveAuthUserFromRequest } from "../../modules/http/auth-plugin.js";
-import { AppRuntime } from "../../runtime.js";
 import { DEFAULT_GAME_SESSION_ID } from "./betting.js";
 import {
   BetAmountTooLowError,
@@ -126,8 +126,9 @@ const runtimeErrorSchema = t.Object({
 export const gameRoutes = new Elysia({ prefix: "/api/game" })
   .post(
     "/session/join",
-    async ({ request }) => {
-      const authUser = await resolveAuthUserFromRequest(request);
+    async (context) => {
+      const authOptions = getAuthOptions(context);
+      const authUser = await resolveAuthUserFromRequest(context.request, authOptions);
 
       if (authUser === null) {
         return status(401, {
@@ -170,8 +171,9 @@ export const gameRoutes = new Elysia({ prefix: "/api/game" })
   )
   .get(
     "/economy",
-    async ({ request }) => {
-      const authUser = await resolveAuthUserFromRequest(request);
+    async (context) => {
+      const authOptions = getAuthOptions(context);
+      const authUser = await resolveAuthUserFromRequest(context.request, authOptions);
 
       if (authUser === null) {
         return status(401, {
@@ -219,8 +221,9 @@ export const gameRoutes = new Elysia({ prefix: "/api/game" })
   )
   .post(
     "/bets",
-    async ({ body, request }) => {
-      const authUser = await resolveAuthUserFromRequest(request);
+    async (context) => {
+      const authOptions = getAuthOptions(context);
+      const authUser = await resolveAuthUserFromRequest(context.request, authOptions);
 
       if (authUser === null) {
         return status(401, {
@@ -233,9 +236,9 @@ export const gameRoutes = new Elysia({ prefix: "/api/game" })
         GameService.placeBet({
           sessionId: DEFAULT_GAME_SESSION_ID,
           userId: authUser.id,
-          requestId: body.requestId,
-          betId: body.betId,
-          amount: body.amount,
+          requestId: context.body.requestId,
+          betId: context.body.betId,
+          amount: context.body.amount,
         }),
       );
 
@@ -316,10 +319,13 @@ function mapGameError(
 function runGameEffect<A, E>(
   effect: Effect.Effect<A, E, GameService>,
 ) {
-  return Effect.runPromise(
-    effect.pipe(
-      Effect.either,
-      Effect.provide(AppRuntime),
-    ),
-  );
+  return runAppEffect(effect);
+}
+
+function getAuthOptions(context: object) {
+  return (context as {
+    authOptions?: {
+      allowTestAuthHeaders?: boolean;
+    };
+  }).authOptions;
 }

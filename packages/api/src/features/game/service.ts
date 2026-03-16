@@ -1,15 +1,18 @@
 import { Effect } from "effect";
-import { GameSessionStore, type GameSessionStoreClient } from "@reaping/redis";
 
 import {
   DEFAULT_GAME_SESSION_ID,
-  createBettingApi,
+  ensureGameSession,
+  getEconomySnapshot as getEconomySnapshotAsync,
   type EconomySnapshot,
   type OpenBettingWindowInput,
+  openBettingWindow as openBettingWindowAsync,
   type PlaceBetInput,
   type PlaceBetResult,
+  placeBet as placeBetAsync,
   type SettleRoundBetsInput,
   type SettleRoundBetsResult,
+  settleRoundBets as settleRoundBetsAsync,
 } from "./betting.js";
 import {
   BetAmountTooLowError,
@@ -23,7 +26,7 @@ import {
   ParticipantNotFoundError,
 } from "./errors.js";
 import {
-  createSessionJoinApi,
+  joinGameSession,
   type JoinGameSessionInput,
 } from "./session-join.js";
 import type { ParticipantWalletState } from "./wallet.js";
@@ -41,46 +44,40 @@ type GameServiceError =
 
 export class GameService extends Effect.Service<GameService>()("GameService", {
   accessors: true,
-  dependencies: [GameSessionStore.Default],
   effect: Effect.gen(function* () {
-    const gameSessionStore = yield* GameSessionStore;
-    const sessionStoreClient = createSessionStoreClient(gameSessionStore);
-    const bettingApi = createBettingApi(sessionStoreClient);
-    const sessionJoinApi = createSessionJoinApi(sessionStoreClient);
-
     const ensureSession = Effect.fn("GameService.ensureSession")(function* (
       sessionId = DEFAULT_GAME_SESSION_ID,
     ) {
-      return yield* tryGamePromise(() => bettingApi.ensureGameSession(sessionId));
+      return yield* tryGamePromise(() => ensureGameSession(sessionId));
     });
 
     const joinSession = Effect.fn("GameService.joinSession")(function* (
       input: JoinGameSessionInput,
     ) {
-      return yield* tryGamePromise(() => sessionJoinApi.joinGameSession(input));
+      return yield* tryGamePromise(() => joinGameSession(input));
     });
 
     const getEconomySnapshot = Effect.fn("GameService.getEconomySnapshot")(function* (input: {
       sessionId: string;
       userId: string | null;
     }) {
-      return yield* tryGamePromise(() => bettingApi.getEconomySnapshot(input));
+      return yield* tryGamePromise(() => getEconomySnapshotAsync(input));
     });
 
     const placeBet = Effect.fn("GameService.placeBet")(function* (input: PlaceBetInput) {
-      return yield* tryGamePromise(() => bettingApi.placeBet(input));
+      return yield* tryGamePromise(() => placeBetAsync(input));
     });
 
     const openBettingWindow = Effect.fn("GameService.openBettingWindow")(function* (
       input: OpenBettingWindowInput,
     ) {
-      return yield* tryGamePromise(() => bettingApi.openBettingWindow(input));
+      return yield* tryGamePromise(() => openBettingWindowAsync(input));
     });
 
     const settleRoundBets = Effect.fn("GameService.settleRoundBets")(function* (
       input: SettleRoundBetsInput,
     ) {
-      return yield* tryGamePromise(() => bettingApi.settleRoundBets(input));
+      return yield* tryGamePromise(() => settleRoundBetsAsync(input));
     });
 
     return {
@@ -112,22 +109,10 @@ export class GameService extends Effect.Service<GameService>()("GameService", {
   }),
 }) {}
 
-function createSessionStoreClient(gameSessionStore: GameSessionStore): GameSessionStoreClient {
-  return {
-    getGameSession: (sessionId) => Effect.runPromise(gameSessionStore.getGameSession(sessionId)),
-    createGameSession: (envelope) =>
-      Effect.runPromise(gameSessionStore.createGameSession(envelope)),
-    updateGameSession: (input) =>
-      Effect.runPromise(gameSessionStore.updateGameSession(input)),
-    resetGameSessionsForTests: () =>
-      Effect.runPromise(gameSessionStore.resetGameSessionsForTests()),
-  };
-}
-
 function tryGamePromise<A>(thunk: () => Promise<A>): Effect.Effect<A, GameServiceError> {
   return Effect.tryPromise({
     try: thunk,
-    catch: toGameServiceError,
+    catch: (error) => toGameServiceError(error),
   });
 }
 

@@ -324,7 +324,7 @@ export function createBettingApi(store: BettingStore) {
     },
     settleRoundBets: async (input: SettleRoundBetsInput): Promise<SettleRoundBetsResult> => {
       const settledAt = input.settledAt ?? new Date().toISOString();
-      let summary: SettlementSummary = {
+      const emptySummary: SettlementSummary = {
         settledBetCount: 0,
         winningBetCount: 0,
         losingBetCount: 0,
@@ -335,14 +335,21 @@ export function createBettingApi(store: BettingStore) {
       if (current.activeBets.length === 0) {
         return {
           economy: buildEconomySnapshot(current, null),
-          summary,
+          summary: emptySummary,
         };
       }
 
+      let committedSummary: SettlementSummary | null = null;
       const envelope = await updateEnvelopeWithRetries(store, input.sessionId, (session) => {
+        const summary: SettlementSummary = {
+          settledBetCount: 0,
+          winningBetCount: 0,
+          losingBetCount: 0,
+        };
         const activeBets = parsePlacedBets(session.activeBets);
 
         if (activeBets.length === 0) {
+          committedSummary = emptySummary;
           return session;
         }
 
@@ -414,6 +421,7 @@ export function createBettingApi(store: BettingStore) {
         }
 
         summary.settledBetCount = activeBets.length;
+        committedSummary = summary;
 
         const nextParticipants = session.participants.map((participantValue) => {
           const userId = typeof participantValue.userId === "string" ? participantValue.userId : null;
@@ -452,9 +460,13 @@ export function createBettingApi(store: BettingStore) {
         };
       });
 
+      if (committedSummary === null) {
+        throw new Error("settlement summary was not produced");
+      }
+
       return {
         economy: buildEconomySnapshot(envelope, null),
-        summary,
+        summary: committedSummary,
       };
     },
     getEconomySnapshot: async (input: {
