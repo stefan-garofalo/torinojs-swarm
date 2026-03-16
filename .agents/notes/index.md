@@ -9,5 +9,7 @@
 [live-game-state.md](./live-game-state.md) Live game/session state stays in Redis; frontend sync goes through server-owned versioned snapshot/event contracts, not direct browser Redis access.
 [redis-package-boundary.md](./redis-package-boundary.md) Keep Redis/Upstash in its own workspace package; `packages/db` stays Postgres-only per TOR-5 and Turbo strict env must be updated for new infra vars.
 [game-session-contract.md](./game-session-contract.md) Keep `@reaping/redis` surface minimal, own key/TTL policy there, and preserve the shared phase enum once TOR-36 aligns to it.
+[server-smoke-tests.md](./server-smoke-tests.md) Keep server smoke coverage on HTTP-visible behavior; deeper betting lifecycle belongs in package-level game tests.
+[workspace-installs.md](./workspace-installs.md) If one workspace package suddenly cannot resolve a normal dependency while siblings can, repair Bun workspace installs from repo root before changing source.
 [bun-optional-runtime-imports.md](./bun-optional-runtime-imports.md) Hide optional runtime-only imports behind an extra indirection in Bun tests or the module can still resolve too early and break test overrides.
 [bun-optional-runtime-imports.md](./bun-optional-runtime-imports.md) Bun can eagerly resolve optional runtime imports during test loading; hide them behind an extra indirection for hermetic tests.

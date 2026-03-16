@@ -1,34 +1,51 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test"
 import { treaty } from "@elysiajs/eden"
+import { config } from "dotenv"
+import { execFileSync } from "node:child_process"
+import { existsSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 
 import type { App, EconomySnapshot } from "@reaping/api"
+
+const localEnvPath = fileURLToPath(new URL("../.env", import.meta.url))
+const gitCommonDir = execFileSync("git", ["rev-parse", "--git-common-dir"], {
+  encoding: "utf8",
+}).trim()
+const sharedEnvPath = fileURLToPath(new URL("../apps/server/.env", `file://${gitCommonDir}/`))
+const envPath = existsSync(localEnvPath) ? localEnvPath : sharedEnvPath
+
+config({ path: envPath, override: false })
+
+const originalEnv = { ...process.env }
+
+const applyServerRuntimeEnv = () => {
+  const runtimeEnv = process.env as Record<string, string | undefined>
+
+  runtimeEnv.DATABASE_URL ??= "postgresql://demo:demo@localhost:5432/reaping"
+  runtimeEnv.DATABASE_URL_DIRECT ??= runtimeEnv.DATABASE_URL
+  runtimeEnv.UPSTASH_REDIS_REST_URL ??= "https://example.upstash.io"
+  runtimeEnv.UPSTASH_REDIS_REST_TOKEN ??= "test-upstash-token"
+  runtimeEnv.BETTER_AUTH_SECRET ??= "12345678901234567890123456789012"
+  runtimeEnv.BETTER_AUTH_URL ??= "http://localhost:3000"
+  runtimeEnv.CORS_ORIGIN ??= "http://localhost:3001"
+  runtimeEnv.BETTER_AUTH_TRUSTED_ORIGINS ??=
+    "http://localhost:3001,https://trusted-preview.example.com"
+  runtimeEnv.GITHUB_CLIENT_ID ??= "github-client-id"
+  runtimeEnv.GITHUB_CLIENT_SECRET ??= "github-client-secret"
+  runtimeEnv.AI_PROVIDER ??= "gateway"
+  runtimeEnv.AI_GATEWAY_MODEL ??= "openai/gpt-5.4"
+  runtimeEnv.AI_OPENAI_MODEL ??= "gpt-5.4"
+  runtimeEnv.NODE_ENV = "test"
+}
 
 describe("app smoke", () => {
   let server: Bun.Server<undefined>
   let api: ReturnType<typeof treaty<App>>
-  let openBettingWindow: typeof import("@reaping/api").openBettingWindow
-  let resetGameSessionsForTests: typeof import("@reaping/api").resetGameSessionsForTests
-  let defaultGameSessionId: string
 
   beforeAll(async () => {
-    process.env.NODE_ENV = "test"
-    process.env.DATABASE_URL ??= "postgresql://test:test@localhost:5432/reaping_test"
-    process.env.UPSTASH_REDIS_REST_URL ??= "https://example.upstash.io"
-    process.env.UPSTASH_REDIS_REST_TOKEN ??= "test-upstash-token"
-    process.env.BETTER_AUTH_SECRET ??= "test-secret-123456789012345678901234"
-    process.env.BETTER_AUTH_URL ??= "http://127.0.0.1:3001"
-    process.env.CORS_ORIGIN ??= "http://127.0.0.1:3000"
+    applyServerRuntimeEnv()
 
-    const apiModule = await import("@reaping/api")
-    const { createApp, DEFAULT_GAME_SESSION_ID, openBettingWindow: openWindow } = apiModule
-
-    openBettingWindow = openWindow
-    resetGameSessionsForTests = apiModule.resetGameSessionsForTests
-    defaultGameSessionId = DEFAULT_GAME_SESSION_ID
-
-    const app = createApp({
-      corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
-    })
+    const { app } = await import("./app.js")
 
     server = Bun.serve({
       fetch: app.fetch,
@@ -39,7 +56,8 @@ describe("app smoke", () => {
   })
 
   afterAll(() => {
-    server.stop(true)
+    server?.stop(true)
+    process.env = { ...originalEnv }
   })
 
   test("serves demo item through Treaty", async () => {
@@ -74,8 +92,10 @@ describe("app smoke", () => {
     })
   })
 
-  test("rejects unauthenticated game access", async () => {
-    const response = await fetch(`${getBaseUrl(server)}/api/game/economy`)
+  test("requires auth before a user can join a game session", async () => {
+    const response = await fetch(`${getBaseUrl(server)}/api/game/session/join`, {
+      method: "POST",
+    })
 
     expect(response.status).toBe(401)
     expect(await response.json()).toEqual({
@@ -84,14 +104,24 @@ describe("app smoke", () => {
     })
   })
 
-  test("joins the game session and places a bet through the HTTP contract", async () => {
-    await resetGameSessionsForTests()
+  test("returns participant not found before an authenticated user joins", async () => {
+    const userId = "smoke-economy-before-join"
+    const response = await fetch(`${getBaseUrl(server)}/api/game/economy`, {
+      headers: createTestUserHeaders(userId),
+    })
 
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({
+      _tag: "ParticipantNotFound",
+      message: `No participant wallet found for "${userId}"`,
+    })
+  })
+
+  test("creates a spectator wallet on join and exposes it through the economy endpoint", async () => {
+    const userId = "smoke-joined-user"
     const joinResponse = await fetch(`${getBaseUrl(server)}/api/game/session/join`, {
       method: "POST",
-      headers: {
-        "x-test-user-id": "tor39-smoke-user",
-      },
+      headers: createTestUserHeaders(userId),
     })
 
     expect(joinResponse.status).toBe(200)
@@ -105,54 +135,66 @@ describe("app smoke", () => {
       throw new Error("joined participant missing from economy snapshot")
     }
 
-    expect(joinedParticipant.userId).toBeDefined()
+    expect(joinedParticipant.userId).toBe(userId)
+    expect(joinedParticipant.role).toBe("spectator")
     expect(joinedParticipant.availableBalance).toBe(joinedParticipant.walletBalance)
+    expect(joinedEconomy.activeBets).toHaveLength(0)
 
-    const openedAt = new Date(Date.now() - 1_000).toISOString()
-
-    await openBettingWindow({
-      sessionId: defaultGameSessionId,
-      openedAt,
-      playerHp: 5,
-      aiHp: 5,
-      magazine: {
-        liveRounds: 3,
-        blankRounds: 7,
-      },
+    const economyResponse = await fetch(`${getBaseUrl(server)}/api/game/economy`, {
+      headers: createTestUserHeaders(userId),
     })
 
-    const placeBetResponse = await fetch(`${getBaseUrl(server)}/api/game/bets`, {
+    expect(economyResponse.status).toBe(200)
+
+    const economy = (await economyResponse.json()) as EconomySnapshot
+    const participant = economy.participant
+
+    expect(participant).not.toBeNull()
+
+    if (participant === null) {
+      throw new Error("participant missing from economy response")
+    }
+
+    expect(participant).toEqual(joinedParticipant)
+  })
+
+  test("rejects bets when no betting window is open", async () => {
+    const userId = "smoke-bet-without-window"
+
+    const joinResponse = await fetch(`${getBaseUrl(server)}/api/game/session/join`, {
+      method: "POST",
+      headers: createTestUserHeaders(userId),
+    })
+
+    expect(joinResponse.status).toBe(200)
+
+    const betResponse = await fetch(`${getBaseUrl(server)}/api/game/bets`, {
       method: "POST",
       headers: {
+        ...createTestUserHeaders(userId),
         "Content-Type": "application/json",
-        "x-test-user-id": "tor39-smoke-user",
       },
       body: JSON.stringify({
-        requestId: "smoke-bet-1",
+        requestId: "smoke-bet-without-window",
         betId: "player-survives-round",
         amount: 100,
       }),
     })
 
-    expect(placeBetResponse.status).toBe(200)
-
-    const placedEconomy = (await placeBetResponse.json()) as EconomySnapshot
-    const placedParticipant = placedEconomy.participant
-
-    expect(placedParticipant).not.toBeNull()
-
-    if (placedParticipant === null) {
-      throw new Error("placed participant missing from economy snapshot")
-    }
-
-    expect(placedEconomy.activeBets).toHaveLength(1)
-    expect(placedParticipant.lockedFunds).toBe(100)
-    expect(placedParticipant.availableBalance).toBe(
-      placedParticipant.walletBalance - 100,
-    )
+    expect(betResponse.status).toBe(409)
+    expect(await betResponse.json()).toEqual({
+      _tag: "BettingWindowClosed",
+      message: "Betting is closed for round 1",
+    })
   })
 })
 
 function getBaseUrl(server: Bun.Server<undefined>): string {
   return `http://127.0.0.1:${server.port ?? 0}`
+}
+
+function createTestUserHeaders(userId: string): Record<string, string> {
+  return {
+    "x-test-user-id": userId,
+  }
 }
