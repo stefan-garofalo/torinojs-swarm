@@ -3,21 +3,32 @@ import { auth, getAuthSessionFromHeaders } from "@reaping/auth"
 
 import { mapHttpMethodError } from "./transport-plugin.js"
 
-export const authPlugin = new Elysia({ name: "auth" }).all(
-  "/api/auth/*",
-  async (context: Context) => {
-    const methodError = mapHttpMethodError(context)
+export type AuthPluginOptions = {
+  allowTestAuthHeaders?: boolean
+}
 
-    if (methodError !== null) {
-      return methodError
-    }
+export const createAuthPlugin = ({ allowTestAuthHeaders = false }: AuthPluginOptions = {}) =>
+  new Elysia({ name: "auth" }).all(
+    "/api/auth/*",
+    async (context: Context) => {
+      const methodError = mapHttpMethodError(context)
 
-    return auth.handler(context.request)
-  },
-)
+      if (methodError !== null) {
+        return methodError
+      }
 
-export async function resolveAuthUserFromRequest(request: Request) {
-  if (process.env.NODE_ENV === "test") {
+      return auth.handler(context.request)
+    },
+  )
+    .decorate("authOptions", {
+      allowTestAuthHeaders,
+    })
+
+export async function resolveAuthUserFromRequest(
+  request: Request,
+  { allowTestAuthHeaders = false }: AuthPluginOptions = {},
+) {
+  if (allowTestAuthHeaders) {
     const testUserId = request.headers.get("x-test-user-id")
 
     if (testUserId !== null && testUserId.length > 0) {

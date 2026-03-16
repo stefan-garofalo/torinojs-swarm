@@ -98,9 +98,9 @@ export function upsertParticipantWalletState(
 export function parseParticipantWalletState(value: JsonObject): ParticipantWalletState | null {
   const userId = getString(value.userId);
   const role = value.role === "spectator" ? value.role : null;
-  const walletBalance = getInteger(value.walletBalance);
-  const lockedFunds = getInteger(value.lockedFunds);
-  const availableBalance = getInteger(value.availableBalance);
+  const walletBalance = getNumber(value.walletBalance);
+  const lockedFunds = getNumber(value.lockedFunds);
+  const availableBalance = getNumber(value.availableBalance);
   const joinedAt = getString(value.joinedAt);
   const eligibleFromRound = getInteger(value.eligibleFromRound);
   const isDead = getBoolean(value.isDead);
@@ -176,6 +176,10 @@ function getString(value: JsonValue | undefined): string | null {
 
 function getInteger(value: JsonValue | undefined): number | null {
   return typeof value === "number" && Number.isInteger(value) ? value : null;
+}
+
+function getNumber(value: JsonValue | undefined): number | null {
+  return typeof value === "number" ? value : null;
 }
 
 function getBoolean(value: JsonValue | undefined): boolean | null {

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
 import {
+  type GameSessionStoreClient,
   createGameSession,
   resetGameSessionsForTests,
   type GameSessionEnvelope,
@@ -19,7 +20,7 @@ import {
   InsufficientAvailableBalanceError,
   ParticipantIneligibleToBetError,
 } from "./errors.js";
-import { joinGameSession } from "./session-join.js";
+import { createSessionJoinApi, joinGameSession } from "./session-join.js";
 
 function createEnvelope(input: {
   sessionId: string;
@@ -348,6 +349,167 @@ describe("game betting lifecycle", () => {
     expect(economy.participant?.walletBalance).toBe(joined.walletBalance - 75 + 50);
     expect(economy.participant?.availableBalance).toBe(joined.walletBalance - 75 + 50);
     expect(economy.economyEvents.map((event) => event.type)).toContain("round-settled");
+  });
+
+  test("keeps settlement summaries accurate when a CAS retry occurs", async () => {
+    const sessionId = "session-retry";
+    let envelope = createEnvelope({ sessionId });
+    let shouldConflict = true;
+
+    const store: Pick<
+      GameSessionStoreClient,
+      "createGameSession" | "getGameSession" | "updateGameSession"
+    > = {
+      createGameSession: async (nextEnvelope) => {
+        envelope = nextEnvelope;
+        return envelope;
+      },
+      getGameSession: async (requestedSessionId) =>
+        requestedSessionId === sessionId ? structuredClone(envelope) : null,
+      updateGameSession: async ({ sessionId: requestedSessionId, expectedVersion, update }) => {
+        if (requestedSessionId !== sessionId) {
+          throw new Error(`unexpected session "${requestedSessionId}"`);
+        }
+
+        if (envelope.version !== expectedVersion) {
+          throw new Error("version mismatch");
+        }
+
+        const nextEnvelope = update(structuredClone(envelope));
+
+        if (shouldConflict) {
+          shouldConflict = false;
+          envelope = {
+            ...envelope,
+            version: envelope.version + 1,
+          };
+          throw new Error("version mismatch");
+        }
+
+        envelope = nextEnvelope;
+        return structuredClone(envelope);
+      },
+    };
+
+    const bettingApi = createBettingApi(store);
+    const sessionJoinApi = createSessionJoinApi(store);
+
+    await bettingApi.ensureGameSession(sessionId);
+    await sessionJoinApi.joinGameSession({
+      sessionId,
+      userId: "user-retry",
+      joinedAt: "2026-03-10T12:30:00.000Z",
+      random: createRandomSequence([0.75, 0.25]),
+    });
+    await bettingApi.openBettingWindow({
+      sessionId,
+      openedAt: "2026-03-10T12:30:10.000Z",
+      playerHp: 4,
+      aiHp: 5,
+      magazine: {
+        liveRounds: 2,
+        blankRounds: 3,
+      },
+    });
+    await bettingApi.placeBet({
+      sessionId,
+      userId: "user-retry",
+      requestId: "req-retry-win",
+      betId: "player-survives-round",
+      amount: 100,
+      placedAt: "2026-03-10T12:30:11.000Z",
+    });
+
+    const settled = await bettingApi.settleRoundBets({
+      sessionId,
+      settledAt: "2026-03-10T12:30:20.000Z",
+      outcome: {
+        playerSurvivedRound: true,
+        playerDiedThisRound: false,
+        aiSurvivedRound: true,
+        aiDiedThisRound: false,
+        aiUsedEject: false,
+        playerShotSelf: false,
+        playerShotOpponent: true,
+        nextShotWasLive: true,
+        nextShotWasBlank: false,
+        playerEndingHp: 4,
+        roundTurnCount: 2,
+        noDamageOccurred: false,
+        bothSidesTookDamage: false,
+      },
+    });
+
+    expect(settled.summary).toEqual({
+      settledBetCount: 1,
+      winningBetCount: 1,
+      losingBetCount: 0,
+    });
+  });
+
+  test("preserves participants after fractional payouts", async () => {
+    await createGameSession(createEnvelope({ sessionId: "session-fractional" }));
+
+    const joined = await joinGameSession({
+      sessionId: "session-fractional",
+      userId: "user-fractional",
+      joinedAt: "2026-03-10T12:40:00.000Z",
+      random: createRandomSequence([0.75, 0.25]),
+    });
+
+    await openBettingWindow({
+      sessionId: "session-fractional",
+      openedAt: "2026-03-10T12:40:10.000Z",
+      playerHp: 4,
+      aiHp: 5,
+      magazine: {
+        liveRounds: 2,
+        blankRounds: 3,
+      },
+    });
+
+    await placeBet({
+      sessionId: "session-fractional",
+      userId: "user-fractional",
+      requestId: "req-fractional",
+      betId: "player-shoots-opponent",
+      amount: 11,
+      placedAt: "2026-03-10T12:40:11.000Z",
+    });
+
+    await settleRoundBets({
+      sessionId: "session-fractional",
+      settledAt: "2026-03-10T12:40:20.000Z",
+      outcome: {
+        playerSurvivedRound: true,
+        playerDiedThisRound: false,
+        aiSurvivedRound: true,
+        aiDiedThisRound: false,
+        aiUsedEject: false,
+        playerShotSelf: false,
+        playerShotOpponent: true,
+        nextShotWasLive: false,
+        nextShotWasBlank: true,
+        playerEndingHp: 4,
+        roundTurnCount: 3,
+        noDamageOccurred: false,
+        bothSidesTookDamage: false,
+      },
+    });
+
+    const economy = await getEconomySnapshot({
+      sessionId: "session-fractional",
+      userId: "user-fractional",
+    });
+
+    expect(economy.participant).not.toBeNull();
+
+    if (economy.participant === null) {
+      throw new Error("participant missing after fractional payout");
+    }
+
+    expect(economy.participant.walletBalance).toBe(joined.walletBalance + 3.3);
+    expect(economy.participant.availableBalance).toBe(joined.walletBalance + 3.3);
   });
 });
 

@@ -1,3 +1,5 @@
+import "server-only"
+
 import { treaty } from "@elysiajs/eden"
 import { createApp } from "@reaping/api"
 import { env } from "@reaping/env/server"

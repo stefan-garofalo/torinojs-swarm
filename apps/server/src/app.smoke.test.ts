@@ -28,6 +28,7 @@ describe("app smoke", () => {
 
     const app = createApp({
       corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
+      allowTestAuthHeaders: true,
     })
 
     server = Bun.serve({

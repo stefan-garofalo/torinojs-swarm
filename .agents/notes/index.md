@@ -11,3 +11,4 @@
 [game-session-contract.md](./game-session-contract.md) Keep `@reaping/redis` surface minimal, own key/TTL policy there, and preserve the shared phase enum once TOR-36 aligns to it.
 [bun-optional-runtime-imports.md](./bun-optional-runtime-imports.md) Hide optional runtime-only imports behind an extra indirection in Bun tests or the module can still resolve too early and break test overrides.
 [bun-optional-runtime-imports.md](./bun-optional-runtime-imports.md) Bun can eagerly resolve optional runtime imports during test loading; hide them behind an extra indirection for hermetic tests.
+[dist-shadowing.md](./dist-shadowing.md) Stale `dist/**` artifacts can mask missing `src/**` modules and make Bun resolution look impossible.

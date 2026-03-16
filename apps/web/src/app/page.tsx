@@ -11,8 +11,6 @@ import {
   CardTitle,
 } from "@/modules/ui/8bit";
 
-export const dynamic = "force-dynamic";
-
 export default async function Home() {
   return (
     <main className="hud-grid min-h-full px-4 py-8 md:px-8">

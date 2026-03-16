@@ -1,7 +1,6 @@
-import { Effect } from "effect"
 import { Elysia, status, t } from "elysia"
 
-import { AppRuntime } from "../../runtime.js"
+import { runAppEffect } from "../../modules/http/run-effect.js"
 import {
   DemoDatabaseUnavailableError,
   DemoItemNotFoundError,
@@ -49,12 +48,7 @@ export const demoRoutes = new Elysia({ prefix: "/api/demo" })
   .get(
     "/items/:id",
     async ({ params }) => {
-      const result = await Effect.runPromise(
-        DemoService.getDemoItem(params.id).pipe(
-          Effect.either,
-          Effect.provide(AppRuntime),
-        ),
-      )
+      const result = await runAppEffect(DemoService.getDemoItem(params.id))
 
       if (result._tag === "Left") {
         if (result.left._tag === "DemoItemNotFound") {
@@ -83,12 +77,7 @@ export const demoRoutes = new Elysia({ prefix: "/api/demo" })
   .get(
     "/db",
     async () => {
-      const result = await Effect.runPromise(
-        DemoService.checkDatabase().pipe(
-          Effect.either,
-          Effect.provide(AppRuntime),
-        ),
-      )
+      const result = await runAppEffect(DemoService.checkDatabase())
 
       if (result._tag === "Left") {
         return status(500, toDatabasePayload(result.left))
